@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Baby Growth &amp; Nutrition Intelligence Platform</title>
+<meta name="description" content="Prototype: WHO growth tracking connected to nutrition intake, for parents and hospital staff." />
+
+<!-- React 18 (served from cdnjs -- more broadly whitelisted by corporate
+     networks/CSPs than unpkg.com, which some environments block outright) -->
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>
+// Minimal inline implementation of react-is (Recharts' only other peer
+// dependency besides React/ReactDOM). Written out here instead of loading
+// it from a CDN because most public mirrors only publish a CommonJS build
+// for this package, which doesn't reliably create a `window.ReactIs`
+// global -- and it's small enough that inlining removes a network
+// dependency entirely. Faithful to the public API of the `react-is` package.
+(function () {
+  var REACT_ELEMENT_TYPE = Symbol.for("react.element");
+  var REACT_PORTAL_TYPE = Symbol.for("react.portal");
+  var REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");
+  var REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode");
+  var REACT_PROFILER_TYPE = Symbol.for("react.profiler");
+  var REACT_PROVIDER_TYPE = Symbol.for("react.provider");
+  var REACT_CONTEXT_TYPE = Symbol.for("react.context");
+  var REACT_SERVER_CONTEXT_TYPE = Symbol.for("react.server_context");
+  var REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref");
+  var REACT_SUSPENSE_TYPE = Symbol.for("react.suspense");
+  var REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list");
+  var REACT_MEMO_TYPE = Symbol.for("react.memo");
+  var REACT_LAZY_TYPE = Symbol.for("react.lazy");
+  var REACT_OFFSCREEN_TYPE = Symbol.for("react.offscreen");
+  var REACT_MODULE_REFERENCE = Symbol.for("react.module.reference");
+
+  function isValidElementType(type) {
+    if (typeof type === "string" || typeof type === "function") return true;
+    if (type === REACT_FRAGMENT_TYPE || type === REACT_PROFILER_TYPE || type === REACT_STRICT_MODE_TYPE ||
+        type === REACT_SUSPENSE_TYPE || type === REACT_SUSPENSE_LIST_TYPE || type === REACT_OFFSCREEN_TYPE) return true;
+    if (typeof type === "object" && type !== null) {
+      if (type.$$typeof === REACT_LAZY_TYPE || type.$$typeof === REACT_MEMO_TYPE ||
+          type.$$typeof === REACT_PROVIDER_TYPE || type.$$typeof === REACT_CONTEXT_TYPE ||
+          type.$$typeof === REACT_FORWARD_REF_TYPE || type.$$typeof === REACT_MODULE_REFERENCE ||
+          type.getModuleId !== undefined) return true;
+    }
+    return false;
+  }
+  function typeOf(object) {
+    if (typeof object === "object" && object !== null) {
+      var $$typeof = object.$$typeof;
+      switch ($$typeof) {
+        case REACT_ELEMENT_TYPE:
+          var type = object.type;
+          switch (type) {
+            case REACT_FRAGMENT_TYPE: case REACT_PROFILER_TYPE: case REACT_STRICT_MODE_TYPE:
+            case REACT_SUSPENSE_TYPE: case REACT_SUSPENSE_LIST_TYPE:
+              return type;
+            default:
+              var $$typeofType = type && type.$$typeof;
+              switch ($$typeofType) {
+                case REACT_SERVER_CONTEXT_TYPE: case REACT_CONTEXT_TYPE: case REACT_FORWARD_REF_TYPE:
+                case REACT_LAZY_TYPE: case REACT_MEMO_TYPE: case REACT_PROVIDER_TYPE:
+                  return $$typeofType;
+                default:
+                  return $$typeof;
+              }
+          }
+        case REACT_PORTAL_TYPE:
+          return $$typeof;
+      }
+    }
+    return undefined;
+  }
+  function isElement(object) { return typeof object === "object" && object !== null && object.$$typeof === REACT_ELEMENT_TYPE; }
+  function isValidElement(object) { return isElement(object); }
+  window.ReactIs = {
+    ContextConsumer: REACT_CONTEXT_TYPE, ContextProvider: REACT_PROVIDER_TYPE, Element: REACT_ELEMENT_TYPE,
+    ForwardRef: REACT_FORWARD_REF_TYPE, Fragment: REACT_FRAGMENT_TYPE, Lazy: REACT_LAZY_TYPE, Memo: REACT_MEMO_TYPE,
+    Portal: REACT_PORTAL_TYPE, Profiler: REACT_PROFILER_TYPE, StrictMode: REACT_STRICT_MODE_TYPE,
+    Suspense: REACT_SUSPENSE_TYPE, SuspenseList: REACT_SUSPENSE_LIST_TYPE,
+    isAsyncMode: function () { return false; }, isConcurrentMode: function () { return false; },
+    isContextConsumer: function (o) { return typeOf(o) === REACT_CONTEXT_TYPE; },
+    isContextProvider: function (o) { return typeOf(o) === REACT_PROVIDER_TYPE; },
+    isElement: isElement,
+    isForwardRef: function (o) { return typeOf(o) === REACT_FORWARD_REF_TYPE; },
+    isFragment: function (o) { return typeOf(o) === REACT_FRAGMENT_TYPE; },
+    isLazy: function (o) { return typeOf(o) === REACT_LAZY_TYPE; },
+    isMemo: function (o) { return typeOf(o) === REACT_MEMO_TYPE; },
+    isPortal: function (o) { return typeOf(o) === REACT_PORTAL_TYPE; },
+    isProfiler: function (o) { return typeOf(o) === REACT_PROFILER_TYPE; },
+    isStrictMode: function (o) { return typeOf(o) === REACT_STRICT_MODE_TYPE; },
+    isSuspense: function (o) { return typeOf(o) === REACT_SUSPENSE_TYPE; },
+    isSuspenseList: function (o) { return typeOf(o) === REACT_SUSPENSE_LIST_TYPE; },
+    isValidElementType: isValidElementType, typeOf: typeOf,
+  };
+})();
+</script>
+<!-- Recharts (charting) -->
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/recharts/3.10.1/Recharts.js"></script>
+<!-- Babel standalone: transpiles the JSX below, in-browser, no build step -->
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.3/babel.min.js"></script>
+
+<style>
+  html, body { margin: 0; padding: 0; background: #E8E3D6; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root">
+  <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;color:#666C5F;">
+    Loading…
+  </div>
+</div>
+
+<!-- App source: type="text/plain" so no browser or auto-scanner executes it directly.
+     The bootstrap script below transforms and runs it explicitly, in a controlled way. -->
+<script type="text/plain" id="app-source">
+const { useState, useMemo } = React;
+const { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } = Recharts;
+
+const ICON_PATHS = {
+  "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />",
+  "alert-circle": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\" /> <line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\" />",
+  "arrow-left": "<path d=\"m12 19-7-7 7-7\" /> <path d=\"M19 12H5\" />",
+  "baby": "<path d=\"M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5\" /> <path d=\"M15 12h.01\" /> <path d=\"M19.38 6.813A9 9 0 0 1 20.8 10.2a2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1\" /> <path d=\"M9 12h.01\" />",
+  "check": "<path d=\"M20 6 9 17l-5-5\" />",
+  "chevron-down": "<path d=\"m6 9 6 6 6-6\" />",
+  "chevron-right": "<path d=\"m9 18 6-6-6-6\" />",
+  "file-text": "<path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\" /> <path d=\"M14 2v5a1 1 0 0 0 1 1h5\" /> <path d=\"M10 9H8\" /> <path d=\"M16 13H8\" /> <path d=\"M16 17H8\" />",
+  "heart": "<path d=\"M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5\" />",
+  "history": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 6v6l4 2\" />",
+  "home": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" /> <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />",
+  "info": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />",
+  "minus": "<path d=\"M5 12h14\" />",
+  "plus": "<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />",
+  "sparkles": "<path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z\" /> <path d=\"M20 2v4\" /> <path d=\"M22 4h-4\" /> <circle cx=\"4\" cy=\"20\" r=\"2\" />",
+  "stethoscope": "<path d=\"M11 2v2\" /> <path d=\"M5 2v2\" /> <path d=\"M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1\" /> <path d=\"M8 15a6 6 0 0 0 12 0v-3\" /> <circle cx=\"20\" cy=\"10\" r=\"2\" />",
+  "trash-2": "<path d=\"M10 11v6\" /> <path d=\"M14 11v6\" /> <path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\" /> <path d=\"M3 6h18\" /> <path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\" />",
+  "trending-down": "<path d=\"M16 17h6v-6\" /> <path d=\"m22 17-8.5-8.5-5 5L2 7\" />",
+  "trending-up": "<path d=\"M16 7h6v6\" /> <path d=\"m22 7-8.5 8.5-5-5L2 17\" />",
+  "user": "<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\" /> <circle cx=\"12\" cy=\"7\" r=\"4\" />",
+  "utensils": "<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\" /> <path d=\"M7 2v20\" /> <path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\" />",
+  "x": "<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />"
+};
+
+function makeIcon(name) {
+  return function IconCmp({ size = 24, color = "currentColor", strokeWidth = 2, style, className }) {
+    return React.createElement("svg", {
+      width: size, height: size, viewBox: "0 0 24 24", fill: "none",
+      stroke: color, strokeWidth: strokeWidth, strokeLinecap: "round", strokeLinejoin: "round",
+      style: style, className: className,
+      dangerouslySetInnerHTML: { __html: ICON_PATHS[name] },
+    });
+  };
+}
+const Home = makeIcon("home");
+const Activity = makeIcon("activity");
+const Utensils = makeIcon("utensils");
+const History = makeIcon("history");
+const User = makeIcon("user");
+const Plus = makeIcon("plus");
+const ChevronRight = makeIcon("chevron-right");
+const ChevronDown = makeIcon("chevron-down");
+const Info = makeIcon("info");
+const Sparkles = makeIcon("sparkles");
+const Check = makeIcon("check");
+const X = makeIcon("x");
+const FileText = makeIcon("file-text");
+const TrendingDown = makeIcon("trending-down");
+const TrendingUp = makeIcon("trending-up");
+const Minus = makeIcon("minus");
+const AlertCircle = makeIcon("alert-circle");
+const Trash2 = makeIcon("trash-2");
+const ArrowLeft = makeIcon("arrow-left");
+const Stethoscope = makeIcon("stethoscope");
+const Heart = makeIcon("heart");
+const Baby = makeIcon("baby");
+
+/* ============================================================================
+   DESIGN TOKENS — kept deliberately restrained: one accent color, used only
+   where it means something (the child's own data, or a primary action).
+   Everything else is ink-on-paper so the numbers carry the weight, not chrome.
+============================================================================ */
+const COLORS = {
+  paper: "#F5F1E8",
+  paperRaised: "#FCFAF4",
+  ink: "#232A22",
+  inkSoft: "#666C5F",
+  inkFaint: "#93988A",
+  primary: "#2F5D50",
+  primaryDeep: "#1F423A",
+  primarySoft: "#E3ECE6",
+  accent: "#DB8A2E",
+  accentSoft: "#F8E8D2",
+  attention: "#B5583C",
+  attentionSoft: "#F3E1D8",
+  gridLine: "#E1D9C6",
+  band: "#B9C4B4",
+  border: "#E4DDC9",
+};
+
+const GLOBAL_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap');
+.bgn-root { font-family: 'Inter', system-ui, sans-serif; color: ${COLORS.ink}; }
+.bgn-serif { font-family: 'Source Serif 4', Georgia, serif; }
+.bgn-scroll::-webkit-scrollbar { display: none; }
+.bgn-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+.bgn-grid-bg {
+  background-image:
+    linear-gradient(${COLORS.gridLine} 1px, transparent 1px),
+    linear-gradient(90deg, ${COLORS.gridLine} 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.bgn-range { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; background: ${COLORS.border}; outline: none; }
+.bgn-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: ${COLORS.accent}; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); cursor: pointer; }
+.bgn-range::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: ${COLORS.accent}; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); cursor: pointer; }
+.bgn-fade-in { animation: bgnFadeIn 0.2s ease-out; }
+@keyframes bgnFadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.bgn-tap:active { transform: scale(0.97); }
+.bgn-input { width: 100%; padding: 12px 13px; border-radius: 12px; border: 1.5px solid ${COLORS.border}; font-size: 15px; font-family: inherit; background: #fff; color: ${COLORS.ink}; }
+.bgn-input:focus { outline: none; border-color: ${COLORS.primary}; }
+.bgn-label { font-size: 12.5px; font-weight: 600; color: ${COLORS.inkSoft}; margin-bottom: 6px; display: block; }
+`;
+
+/* ============================================================================
+   WHO CHILD GROWTH STANDARDS — LMS reference parameters
+   Source: WHO Child Growth Standards (2006), official published L,M,S values,
+   0–24 completed months (boys/girls), weight-for-length 45–95 cm.
+============================================================================ */
+const WFA_BOYS = [[0.0,0.3487,3.3464,0.14602],[1.0,0.2297,4.4709,0.13395],[2.0,0.197,5.5675,0.12385],[3.0,0.1738,6.3762,0.11727],[4.0,0.1553,7.0023,0.11316],[5.0,0.1395,7.5105,0.1108],[6.0,0.1257,7.934,0.10958],[7.0,0.1134,8.297,0.10902],[8.0,0.1021,8.6151,0.10882],[9.0,0.0917,8.9014,0.10881],[10.0,0.082,9.1649,0.10891],[11.0,0.073,9.4122,0.10906],[12.0,0.0644,9.6479,0.10925],[13.0,0.0563,9.8749,0.10949],[14.0,0.0487,10.0953,0.10976],[15.0,0.0413,10.3108,0.11007],[16.0,0.0343,10.5228,0.11041],[17.0,0.0275,10.7319,0.11079],[18.0,0.0211,10.9385,0.11119],[19.0,0.0148,11.143,0.11164],[20.0,0.0087,11.3462,0.11211],[21.0,0.0029,11.5486,0.11261],[22.0,-0.0028,11.7504,0.11314],[23.0,-0.0083,11.9514,0.1137],[24.0,-0.0137,12.1515,0.11426]];
+const WFA_GIRLS = [[0.0,0.3809,3.2322,0.14171],[1.0,0.1714,4.1873,0.13724],[2.0,0.0962,5.1282,0.13],[3.0,0.0402,5.8458,0.12619],[4.0,-0.005,6.4237,0.12402],[5.0,-0.043,6.8985,0.12274],[6.0,-0.0756,7.297,0.12204],[7.0,-0.1039,7.6422,0.12178],[8.0,-0.1288,7.9487,0.12181],[9.0,-0.1507,8.2254,0.12199],[10.0,-0.17,8.48,0.12223],[11.0,-0.1872,8.7192,0.12247],[12.0,-0.2024,8.9481,0.12268],[13.0,-0.2158,9.1699,0.12283],[14.0,-0.2278,9.387,0.12294],[15.0,-0.2384,9.6008,0.12299],[16.0,-0.2478,9.8124,0.12303],[17.0,-0.2562,10.0226,0.12306],[18.0,-0.2637,10.2315,0.12309],[19.0,-0.2703,10.4393,0.12315],[20.0,-0.2762,10.6464,0.12323],[21.0,-0.2815,10.8534,0.12335],[22.0,-0.2862,11.0608,0.1235],[23.0,-0.2903,11.2688,0.12369],[24.0,-0.2941,11.4775,0.1239]];
+const LHFA_BOYS = [[0.0,1.0,49.8842,0.03795],[1.0,1.0,54.7244,0.03557],[2.0,1.0,58.4249,0.03424],[3.0,1.0,61.4292,0.03328],[4.0,1.0,63.886,0.03257],[5.0,1.0,65.9026,0.03204],[6.0,1.0,67.6236,0.03165],[7.0,1.0,69.1645,0.03139],[8.0,1.0,70.5994,0.03124],[9.0,1.0,71.9687,0.03117],[10.0,1.0,73.2812,0.03118],[11.0,1.0,74.5388,0.03125],[12.0,1.0,75.7488,0.03137],[13.0,1.0,76.9186,0.03154],[14.0,1.0,78.0497,0.03174],[15.0,1.0,79.1458,0.03197],[16.0,1.0,80.2113,0.03222],[17.0,1.0,81.2487,0.0325],[18.0,1.0,82.2587,0.03279],[19.0,1.0,83.2418,0.0331],[20.0,1.0,84.1996,0.03342],[21.0,1.0,85.1348,0.03376],[22.0,1.0,86.0477,0.0341],[23.0,1.0,86.941,0.03445],[24.0,1.0,87.8161,0.03479]];
+const LHFA_GIRLS = [[0.0,1.0,49.1477,0.0379],[1.0,1.0,53.6872,0.0364],[2.0,1.0,57.0673,0.03568],[3.0,1.0,59.8029,0.0352],[4.0,1.0,62.0899,0.03486],[5.0,1.0,64.0301,0.03463],[6.0,1.0,65.7311,0.03448],[7.0,1.0,67.2873,0.03441],[8.0,1.0,68.7498,0.0344],[9.0,1.0,70.1435,0.03444],[10.0,1.0,71.4818,0.03452],[11.0,1.0,72.771,0.03464],[12.0,1.0,74.015,0.03479],[13.0,1.0,75.2176,0.03496],[14.0,1.0,76.3817,0.03514],[15.0,1.0,77.5099,0.03534],[16.0,1.0,78.6055,0.03555],[17.0,1.0,79.671,0.03576],[18.0,1.0,80.7079,0.03598],[19.0,1.0,81.7182,0.0362],[20.0,1.0,82.7036,0.03643],[21.0,1.0,83.6654,0.03666],[22.0,1.0,84.604,0.03688],[23.0,1.0,85.5202,0.03711],[24.0,1.0,86.4153,0.03734]];
+const HCFA_BOYS = [[0.0,1.0,34.4618,0.03686],[1.0,1.0,37.2759,0.03133],[2.0,1.0,39.1285,0.02997],[3.0,1.0,40.5135,0.02918],[4.0,1.0,41.6317,0.02868],[5.0,1.0,42.5576,0.02837],[6.0,1.0,43.3306,0.02817],[7.0,1.0,43.9803,0.02804],[8.0,1.0,44.53,0.02796],[9.0,1.0,44.9998,0.02792],[10.0,1.0,45.4051,0.0279],[11.0,1.0,45.7573,0.02789],[12.0,1.0,46.0661,0.02789],[13.0,1.0,46.3395,0.02789],[14.0,1.0,46.5844,0.02791],[15.0,1.0,46.806,0.02792],[16.0,1.0,47.0088,0.02795],[17.0,1.0,47.1962,0.02797],[18.0,1.0,47.3711,0.028],[19.0,1.0,47.5357,0.02803],[20.0,1.0,47.6919,0.02806],[21.0,1.0,47.8408,0.0281],[22.0,1.0,47.9833,0.02813],[23.0,1.0,48.1201,0.02817],[24.0,1.0,48.2515,0.02821]];
+const HCFA_GIRLS = [[0.0,1.0,33.8787,0.03496],[1.0,1.0,36.5463,0.0321],[2.0,1.0,38.2521,0.03168],[3.0,1.0,39.5328,0.0314],[4.0,1.0,40.5817,0.03119],[5.0,1.0,41.459,0.03102],[6.0,1.0,42.1995,0.03087],[7.0,1.0,42.829,0.03075],[8.0,1.0,43.3671,0.03063],[9.0,1.0,43.83,0.03053],[10.0,1.0,44.2319,0.03044],[11.0,1.0,44.5844,0.03035],[12.0,1.0,44.8965,0.03027],[13.0,1.0,45.1752,0.03019],[14.0,1.0,45.4265,0.03012],[15.0,1.0,45.6551,0.03006],[16.0,1.0,45.865,0.02999],[17.0,1.0,46.0598,0.02993],[18.0,1.0,46.2424,0.02987],[19.0,1.0,46.4152,0.02982],[20.0,1.0,46.5801,0.02977],[21.0,1.0,46.7384,0.02972],[22.0,1.0,46.8913,0.02967],[23.0,1.0,47.0391,0.02962],[24.0,1.0,47.1822,0.02957]];
+const WFL_BOYS = [[45.0,-0.3521,2.441,0.09182],[46.0,-0.3521,2.6077,0.09124],[47.0,-0.3521,2.7755,0.09065],[48.0,-0.3521,2.948,0.09007],[49.0,-0.3521,3.1308,0.08948],[50.0,-0.3521,3.3278,0.0889],[51.0,-0.3521,3.5376,0.08831],[52.0,-0.3521,3.762,0.08771],[53.0,-0.3521,4.006,0.08711],[54.0,-0.3521,4.2693,0.08651],[55.0,-0.3521,4.5467,0.08592],[56.0,-0.3521,4.8338,0.08535],[57.0,-0.3521,5.1259,0.08481],[58.0,-0.3521,5.418,0.0843],[59.0,-0.3521,5.7074,0.08383],[60.0,-0.3521,5.9907,0.08342],[61.0,-0.3521,6.2632,0.08308],[62.0,-0.3521,6.5251,0.08279],[63.0,-0.3521,6.7786,0.08255],[64.0,-0.3521,7.0255,0.08236],[65.0,-0.3521,7.2666,0.08223],[66.0,-0.3521,7.5034,0.08215],[67.0,-0.3521,7.737,0.08212],[68.0,-0.3521,7.9674,0.08214],[69.0,-0.3521,8.1955,0.08219],[70.0,-0.3521,8.4227,0.08229],[71.0,-0.3521,8.648,0.08241],[72.0,-0.3521,8.8697,0.08254],[73.0,-0.3521,9.0865,0.08269],[74.0,-0.3521,9.2974,0.08283],[75.0,-0.3521,9.5032,0.08295],[76.0,-0.3521,9.7033,0.08307],[77.0,-0.3521,9.8963,0.08314],[78.0,-0.3521,10.0827,0.08318],[79.0,-0.3521,10.2649,0.08316],[80.0,-0.3521,10.4475,0.08308],[81.0,-0.3521,10.6352,0.08293],[82.0,-0.3521,10.8321,0.08273],[83.0,-0.3521,11.0415,0.08246],[84.0,-0.3521,11.2651,0.08215],[85.0,-0.3521,11.5007,0.08181],[86.0,-0.3521,11.7444,0.08145],[87.0,-0.3521,11.9916,0.08111],[88.0,-0.3521,12.2382,0.08082],[89.0,-0.3521,12.4815,0.08058],[90.0,-0.3521,12.7209,0.08041],[91.0,-0.3521,12.9569,0.0803],[92.0,-0.3521,13.191,0.08025],[93.0,-0.3521,13.4239,0.08026],[94.0,-0.3521,13.6572,0.08034],[95.0,-0.3521,13.8928,0.08047]];
+const WFL_GIRLS = [[45.0,-0.3833,2.4607,0.09029],[46.0,-0.3833,2.6306,0.09037],[47.0,-0.3833,2.8007,0.09044],[48.0,-0.3833,2.9741,0.09052],[49.0,-0.3833,3.156,0.0906],[50.0,-0.3833,3.3518,0.09068],[51.0,-0.3833,3.5636,0.09076],[52.0,-0.3833,3.7911,0.09085],[53.0,-0.3833,4.0332,0.09093],[54.0,-0.3833,4.2875,0.09102],[55.0,-0.3833,4.5498,0.0911],[56.0,-0.3833,4.8162,0.09118],[57.0,-0.3833,5.0837,0.09125],[58.0,-0.3833,5.3507,0.0913],[59.0,-0.3833,5.6151,0.09134],[60.0,-0.3833,5.8742,0.09136],[61.0,-0.3833,6.127,0.09137],[62.0,-0.3833,6.3738,0.09135],[63.0,-0.3833,6.6144,0.09131],[64.0,-0.3833,6.8501,0.09126],[65.0,-0.3833,7.0812,0.09119],[66.0,-0.3833,7.3076,0.0911],[67.0,-0.3833,7.5288,0.09101],[68.0,-0.3833,7.7448,0.0909],[69.0,-0.3833,7.9559,0.09079],[70.0,-0.3833,8.163,0.09068],[71.0,-0.3833,8.3666,0.09056],[72.0,-0.3833,8.5679,0.09043],[73.0,-0.3833,8.7661,0.09031],[74.0,-0.3833,8.9601,0.09018],[75.0,-0.3833,9.149,0.09005],[76.0,-0.3833,9.3337,0.08992],[77.0,-0.3833,9.5166,0.08979],[78.0,-0.3833,9.7015,0.08965],[79.0,-0.3833,9.8915,0.08952],[80.0,-0.3833,10.0891,0.0894],[81.0,-0.3833,10.2965,0.08928],[82.0,-0.3833,10.514,0.08918],[83.0,-0.3833,10.741,0.0891],[84.0,-0.3833,10.9767,0.08903],[85.0,-0.3833,11.2198,0.08898],[86.0,-0.3833,11.4684,0.08895],[87.0,-0.3833,11.7201,0.08895],[88.0,-0.3833,11.972,0.08896],[89.0,-0.3833,12.2229,0.089],[90.0,-0.3833,12.4723,0.08906],[91.0,-0.3833,12.7205,0.08913],[92.0,-0.3833,12.9681,0.08923],[93.0,-0.3833,13.2158,0.08934],[94.0,-0.3833,13.4643,0.08948],[95.0,-0.3833,13.7146,0.08963]];
+const BMIFA_BOYS = [[0.0,-0.3053,13.4069,0.0956],[1.0,0.2708,14.9441,0.09027],[2.0,0.1118,16.3195,0.08677],[3.0,0.0068,16.8987,0.08495],[4.0,-0.0727,17.1579,0.08378],[5.0,-0.137,17.2919,0.08296],[6.0,-0.1913,17.3422,0.08234],[7.0,-0.2385,17.3288,0.08183],[8.0,-0.2802,17.2647,0.0814],[9.0,-0.3176,17.1662,0.08102],[10.0,-0.3516,17.0488,0.08068],[11.0,-0.3828,16.9239,0.08037],[12.0,-0.4115,16.7981,0.08009],[13.0,-0.4382,16.6743,0.07982],[14.0,-0.463,16.5548,0.07958],[15.0,-0.4863,16.4409,0.07935],[16.0,-0.5082,16.3335,0.07913],[17.0,-0.5289,16.2329,0.07892],[18.0,-0.5484,16.1392,0.07873],[19.0,-0.5669,16.0528,0.07854],[20.0,-0.5846,15.9743,0.07836],[21.0,-0.6014,15.9039,0.07818],[22.0,-0.6174,15.8412,0.07802],[23.0,-0.6328,15.7852,0.07786],[24.0,-0.6473,15.7356,0.07771]];
+const BMIFA_GIRLS = [[0.0,-0.0631,13.3363,0.09272],[1.0,0.3448,14.5679,0.09556],[2.0,0.1749,15.7679,0.09371],[3.0,0.0643,16.3574,0.09254],[4.0,-0.0191,16.6703,0.09166],[5.0,-0.0864,16.8386,0.09096],[6.0,-0.1429,16.9083,0.09036],[7.0,-0.1916,16.902,0.08984],[8.0,-0.2344,16.8404,0.08939],[9.0,-0.2725,16.7406,0.08898],[10.0,-0.3068,16.6184,0.08861],[11.0,-0.3381,16.4875,0.08828],[12.0,-0.3667,16.3568,0.08797],[13.0,-0.3932,16.2311,0.08768],[14.0,-0.4177,16.1128,0.08741],[15.0,-0.4407,16.0028,0.08716],[16.0,-0.4623,15.9017,0.08693],[17.0,-0.4825,15.8096,0.08671],[18.0,-0.5017,15.7263,0.0865],[19.0,-0.5199,15.6517,0.0863],[20.0,-0.5372,15.5855,0.08612],[21.0,-0.5537,15.5278,0.08594],[22.0,-0.5695,15.4787,0.08577],[23.0,-0.5846,15.438,0.0856],[24.0,-0.5989,15.4052,0.08545]];
+
+/* ============================================================================
+   GROWTH ENGINE — pure, deterministic, auditable
+============================================================================ */
+function lookupLMS(table, x) {
+  if (x <= table[0][0]) return table[0];
+  if (x >= table[table.length - 1][0]) return table[table.length - 1];
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, L0, M0, S0] = table[i];
+    const [x1, L1, M1, S1] = table[i + 1];
+    if (x >= x0 && x <= x1) {
+      const f = (x - x0) / (x1 - x0);
+      return [x, L0 + f * (L1 - L0), M0 + f * (M1 - M0), S0 + f * (S1 - S0)];
+    }
+  }
+  return table[table.length - 1];
+}
+function zFromLMS(value, lms) {
+  const [, L, M, S] = lms;
+  if (Math.abs(L) < 1e-6) return Math.log(value / M) / S;
+  return (Math.pow(value / M, L) - 1) / (L * S);
+}
+function valueFromZ(z, lms) {
+  const [, L, M, S] = lms;
+  if (Math.abs(L) < 1e-6) return M * Math.exp(S * z);
+  return M * Math.pow(1 + L * S * z, 1 / L);
+}
+function erf(x) {
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  return sign * y;
+}
+function percentileFromZ(z) { return 50 * (1 + erf(z / Math.sqrt(2))); }
+function ordinal(n) {
+  const r = Math.round(n);
+  const v = r % 100;
+  const s = ["th", "st", "nd", "rd"];
+  return r + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+function round1(x) { return Math.round(x * 10) / 10; }
+function round0(x) { return Math.round(x); }
+const TABLES = {
+  M: { wfa: WFA_BOYS, lhfa: LHFA_BOYS, hcfa: HCFA_BOYS, wfl: WFL_BOYS, bmifa: BMIFA_BOYS },
+  F: { wfa: WFA_GIRLS, lhfa: LHFA_GIRLS, hcfa: HCFA_GIRLS, wfl: WFL_GIRLS, bmifa: BMIFA_GIRLS },
+};
+function computeGrowth(sex, ageMonthsForCalc, weight, length, hc) {
+  const t = TABLES[sex];
+  const bmi = weight / Math.pow(length / 100, 2);
+  const zW = zFromLMS(weight, lookupLMS(t.wfa, ageMonthsForCalc));
+  const zL = zFromLMS(length, lookupLMS(t.lhfa, ageMonthsForCalc));
+  const zH = zFromLMS(hc, lookupLMS(t.hcfa, ageMonthsForCalc));
+  const zWL = zFromLMS(weight, lookupLMS(t.wfl, length));
+  const zBmi = zFromLMS(bmi, lookupLMS(t.bmifa, ageMonthsForCalc));
+  return {
+    bmi, zWeight: zW, zLength: zL, zHc: zH, zWfl: zWL, zBmi,
+    pWeight: percentileFromZ(zW), pLength: percentileFromZ(zL), pHc: percentileFromZ(zH), pWfl: percentileFromZ(zWL), pBmi: percentileFromZ(zBmi),
+  };
+}
+
+/* ============================================================================
+   AGE / CORRECTED AGE — from date of birth, per standard preterm correction
+   (subtract weeks premature from chronological age until the standard
+   correction window; used only to select the right point on the WHO curve).
+============================================================================ */
+function ageInMonths(dobStr, onDateStr) {
+  const dob = new Date(dobStr + "T00:00:00");
+  const on = new Date(onDateStr + "T00:00:00");
+  const days = (on - dob) / 86400000;
+  return Math.max(0, days / 30.4368499);
+}
+function correctedAgeMonths(chronoMonths, gestWeeks, preterm) {
+  if (!preterm || !gestWeeks || gestWeeks >= 37) return chronoMonths;
+  const weeksPremature = 40 - gestWeeks;
+  return Math.max(0, chronoMonths - weeksPremature / 4.345);
+}
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+/* ============================================================================
+   NUTRITION ENGINE
+   Basis: raw-ingredient composition informed by ICMR–National Institute of
+   Nutrition's Indian Food Composition Tables (IFCT 2017) methodology,
+   converted to as-consumed (cooked) density using standard cooking-yield
+   factors, and cross-checked against published composition data.
+   IMPORTANT — IFCT 2017 covers 528 RAW commodities only; it does not include
+   composite cooked dishes (khichdi, idli, dosa, roti). Those are recipe-level
+   estimates built from ingredient composition, not direct IFCT entries.
+   IFCT 2017's terms permit personal-use reproduction but require NIN's
+   written permission to embed the data in a product — a production build
+   would need a proper data licence/API from NIN rather than these prototype
+   figures. See the in-app "Data sources & methodology" panel.
+============================================================================ */
+const FOOD_DB = {
+  rice:       { name: "Rice (cooked)",              kcal: 130, protein: 2.7, carbs: 28,   fat: 0.3, fiber: 0.4, iron: 0.2, calcium: 10,  vitd: 0 },
+  dal:        { name: "Dal (cooked)",                kcal: 116, protein: 9.0, carbs: 20,   fat: 0.4, fiber: 8.0, iron: 2.0, calcium: 25,  vitd: 0 },
+  khichdi:    { name: "Khichdi",                     kcal: 110, protein: 4.0, carbs: 18,   fat: 2.5, fiber: 2.0, iron: 1.0, calcium: 20,  vitd: 0 },
+  roti:       { name: "Roti (whole wheat)",          kcal: 300, protein: 9.0, carbs: 55,   fat: 5.0, fiber: 8.0, iron: 2.5, calcium: 30,  vitd: 0, countable: true, pieceGrams: 30 },
+  curd:       { name: "Curd",                        kcal: 60,  protein: 3.5, carbs: 4.5,  fat: 3.0, fiber: 0,   iron: 0.1, calcium: 120, vitd: 0.05 },
+  paneer:     { name: "Paneer",                      kcal: 265, protein: 18,  carbs: 3.0,  fat: 20,  fiber: 0,   iron: 0.3, calcium: 480, vitd: 0 },
+  banana:     { name: "Banana",                      kcal: 89,  protein: 1.1, carbs: 23,   fat: 0.3, fiber: 2.6, iron: 0.3, calcium: 5,   vitd: 0, countable: true, pieceGrams: 120 },
+  apple:      { name: "Apple",                       kcal: 52,  protein: 0.3, carbs: 14,   fat: 0.2, fiber: 2.4, iron: 0.1, calcium: 6,   vitd: 0, countable: true, pieceGrams: 150 },
+  vegetables: { name: "Mixed vegetables (cooked)",   kcal: 70,  protein: 2.0, carbs: 14,   fat: 0.5, fiber: 3.0, iron: 0.8, calcium: 30,  vitd: 0 },
+  ghee:       { name: "Ghee",                        kcal: 900, protein: 0,   carbs: 0,    fat: 100, fiber: 0,   iron: 0,   calcium: 0,   vitd: 0 },
+  egg:        { name: "Egg (boiled)",                kcal: 155, protein: 13,  carbs: 1.1,  fat: 11,  fiber: 0,   iron: 1.2, calcium: 50,  vitd: 2.0, countable: true, pieceGrams: 50 },
+  idli:       { name: "Idli",                        kcal: 150, protein: 4.0, carbs: 30,   fat: 1.0, fiber: 1.0, iron: 0.6, calcium: 15,  vitd: 0, countable: true, pieceGrams: 40 },
+  dosa:       { name: "Dosa",                        kcal: 168, protein: 3.9, carbs: 28,   fat: 3.7, fiber: 1.0, iron: 0.7, calcium: 15,  vitd: 0, countable: true, pieceGrams: 80 },
+};
+const GENERIC_UNITS_G = { katori: 150, bowl: 200, cup: 200, tsp: 5, tbsp: 15, glass: 200 };
+function unitOptions(foodId) {
+  const f = FOOD_DB[foodId];
+  const opts = [];
+  if (f.countable) opts.push("piece");
+  return [...opts, "katori", "bowl", "cup", "tsp", "tbsp", "glass"];
+}
+function gramsForServing(foodId, unit, qty) {
+  const f = FOOD_DB[foodId];
+  if (unit === "piece") return (f.pieceGrams || 50) * qty;
+  return (GENERIC_UNITS_G[unit] || 100) * qty;
+}
+function nutrientsForGrams(foodId, grams, pct = 100) {
+  const f = FOOD_DB[foodId];
+  const scale = (grams / 100) * (pct / 100);
+  return {
+    kcal: f.kcal * scale, protein: f.protein * scale, carbs: f.carbs * scale, fat: f.fat * scale,
+    fiber: f.fiber * scale, iron: f.iron * scale, calcium: f.calcium * scale, vitd: f.vitd * scale,
+  };
+}
+function sumNutrients(list) {
+  return list.reduce((acc, n) => {
+    Object.keys(n).forEach((k) => { acc[k] = (acc[k] || 0) + n[k]; });
+    return acc;
+  }, { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, iron: 0, calcium: 0, vitd: 0 });
+}
+function itemNutrients(item) {
+  const g = gramsForServing(item.food, item.unit, item.qty);
+  return { offered: nutrientsForGrams(item.food, g, 100), consumed: nutrientsForGrams(item.food, g, item.pct) };
+}
+// Reference intake — ICMR–National Institute of Nutrition, "Nutrient
+// Requirements for Indians: RDA & EAR 2020" (Expert Group Report).
+// These are the FULL daily RDA (all sources). Breast milk/formula typically
+// supplies part of this — especially energy and calcium in the first year —
+// so complementary/solid-food coverage well under 100% is expected and is
+// not by itself a sign of a problem.
+function referenceForAge(ageMonths) {
+  if (ageMonths < 12) return { kcal: 700, protein: 10.5, iron: 3, calcium: 300, vitd: 10, label: "6–11 months (ICMR-NIN RDA 2020)" };
+  return { kcal: 1060, protein: 12.5, iron: 8, calcium: 500, vitd: 10, label: "1–3 years (ICMR-NIN RDA 2020)" };
+}
+const QUICK_PCTS = [
+  { label: "None", value: 0 }, { label: "A little", value: 15 }, { label: "~25%", value: 25 },
+  { label: "~50%", value: 50 }, { label: "~75%", value: 75 }, { label: "Almost all", value: 90 }, { label: "All", value: 100 },
+];
+const MEAL_TYPES = [
+  { id: "breakfast", label: "Breakfast" }, { id: "lunch", label: "Lunch" },
+  { id: "snack", label: "Snack" }, { id: "dinner", label: "Dinner" },
+];
+
+/* ============================================================================
+   DEMO DATA — fictional child "Aarav", used only via "See a demo" on the
+   welcome screen so the full feature set (history, trends) is visible
+   without requiring days of real logging first.
+============================================================================ */
+function demoDob() { const d = new Date(); d.setMonth(d.getMonth() - 12); return d.toISOString().slice(0, 10); }
+const DEMO_BABY = {
+  name: "Aarav", sex: "M", dob: demoDob(), preterm: false, gestationalAgeWeeks: 39,
+  birthWeight: 3.3, birthLength: 50.0, birthHc: 34.5,
+};
+const DEMO_MEASUREMENTS = [
+  { ageMonths: 0,  label: "Birth",     weight: 3.3, length: 50.0, hc: 34.5, source: "Hospital record", confidence: "High" },
+  { ageMonths: 1,  label: "1 month",   weight: 4.3, length: 54.5, hc: 37.2, source: "Clinic visit",     confidence: "High" },
+  { ageMonths: 2,  label: "2 months",  weight: 5.3, length: 58.0, hc: 39.0, source: "Clinic visit",     confidence: "High" },
+  { ageMonths: 3,  label: "3 months",  weight: 6.0, length: 61.0, hc: 40.3, source: "Clinic visit",     confidence: "High" },
+  { ageMonths: 4,  label: "4 months",  weight: 6.5, length: 63.5, hc: 41.4, source: "Clinic visit",     confidence: "High" },
+  { ageMonths: 6,  label: "6 months",  weight: 7.2, length: 67.0, hc: 43.1, source: "Clinic visit",     confidence: "High" },
+  { ageMonths: 9,  label: "9 months",  weight: 7.9, length: 71.5, hc: 44.8, source: "Home scale",       confidence: "Medium" },
+  { ageMonths: 12, label: "12 months (today)", weight: 8.4, length: 75.0, hc: 45.8, source: "Home scale", confidence: "Medium" },
+];
+const DEMO_MEAL_LOG_RAW = [
+  { offset: 6, meals: [
+    { type: "breakfast", items: [{ food: "idli", qty: 3, unit: "piece", pct: 80 }, { food: "curd", qty: 0.5, unit: "katori", pct: 90 }] },
+    { type: "lunch", items: [{ food: "rice", qty: 1, unit: "bowl", pct: 60 }, { food: "dal", qty: 1, unit: "katori", pct: 70 }, { food: "vegetables", qty: 0.5, unit: "katori", pct: 50 }] },
+    { type: "snack", items: [{ food: "banana", qty: 1, unit: "piece", pct: 100 }] },
+    { type: "dinner", items: [{ food: "roti", qty: 2, unit: "piece", pct: 50 }, { food: "dal", qty: 0.5, unit: "katori", pct: 60 }] },
+  ]},
+  { offset: 5, meals: [
+    { type: "breakfast", items: [{ food: "dosa", qty: 1, unit: "piece", pct: 90 }, { food: "curd", qty: 0.5, unit: "katori", pct: 100 }] },
+    { type: "lunch", items: [{ food: "khichdi", qty: 1, unit: "bowl", pct: 70 }, { food: "vegetables", qty: 0.5, unit: "katori", pct: 60 }] },
+    { type: "snack", items: [{ food: "apple", qty: 0.5, unit: "piece", pct: 80 }] },
+    { type: "dinner", items: [{ food: "rice", qty: 1, unit: "bowl", pct: 50 }, { food: "dal", qty: 1, unit: "katori", pct: 80 }, { food: "ghee", qty: 1, unit: "tsp", pct: 100 }] },
+  ]},
+  { offset: 4, meals: [
+    { type: "breakfast", items: [{ food: "roti", qty: 1, unit: "piece", pct: 70 }, { food: "curd", qty: 0.5, unit: "katori", pct: 80 }] },
+    { type: "lunch", items: [{ food: "rice", qty: 1, unit: "bowl", pct: 80 }, { food: "dal", qty: 1, unit: "katori", pct: 90 }, { food: "vegetables", qty: 0.5, unit: "katori", pct: 70 }] },
+    { type: "snack", items: [{ food: "banana", qty: 1, unit: "piece", pct: 100 }] },
+    { type: "dinner", items: [{ food: "khichdi", qty: 1, unit: "bowl", pct: 60 }, { food: "ghee", qty: 1, unit: "tsp", pct: 100 }] },
+  ]},
+  { offset: 3, meals: [
+    { type: "breakfast", items: [{ food: "idli", qty: 2, unit: "piece", pct: 60 }, { food: "curd", qty: 0.5, unit: "katori", pct: 70 }] },
+    { type: "lunch", items: [{ food: "rice", qty: 1, unit: "bowl", pct: 50 }, { food: "vegetables", qty: 0.5, unit: "katori", pct: 40 }, { food: "dal", qty: 0.5, unit: "katori", pct: 50 }] },
+    { type: "snack", items: [{ food: "apple", qty: 0.5, unit: "piece", pct: 100 }] },
+    { type: "dinner", items: [{ food: "roti", qty: 1, unit: "piece", pct: 60 }, { food: "paneer", qty: 0.3, unit: "katori", pct: 80 }] },
+  ]},
+  { offset: 2, meals: [
+    { type: "breakfast", items: [{ food: "dosa", qty: 1, unit: "piece", pct: 80 }, { food: "curd", qty: 0.5, unit: "katori", pct: 90 }] },
+    { type: "lunch", items: [{ food: "khichdi", qty: 1, unit: "bowl", pct: 80 }, { food: "egg", qty: 0.5, unit: "piece", pct: 100 }] },
+    { type: "snack", items: [{ food: "banana", qty: 1, unit: "piece", pct: 90 }] },
+    { type: "dinner", items: [{ food: "rice", qty: 1, unit: "bowl", pct: 70 }, { food: "dal", qty: 1, unit: "katori", pct: 70 }, { food: "ghee", qty: 1, unit: "tsp", pct: 100 }] },
+  ]},
+  { offset: 1, meals: [
+    { type: "breakfast", items: [{ food: "roti", qty: 1, unit: "piece", pct: 50 }, { food: "curd", qty: 0.5, unit: "katori", pct: 60 }] },
+    { type: "lunch", items: [{ food: "rice", qty: 1, unit: "bowl", pct: 60 }, { food: "vegetables", qty: 0.5, unit: "katori", pct: 50 }, { food: "dal", qty: 0.5, unit: "katori", pct: 40 }] },
+    { type: "snack", items: [{ food: "apple", qty: 0.5, unit: "piece", pct: 90 }] },
+    { type: "dinner", items: [{ food: "khichdi", qty: 1, unit: "bowl", pct: 50 }] },
+  ]},
+  { offset: 0, meals: [
+    { type: "breakfast", items: [{ food: "idli", qty: 3, unit: "piece", pct: 90 }, { food: "curd", qty: 0.5, unit: "katori", pct: 100 }] },
+    { type: "lunch", items: [{ food: "rice", qty: 1, unit: "bowl", pct: 70 }, { food: "dal", qty: 1, unit: "katori", pct: 80 }, { food: "vegetables", qty: 0.5, unit: "katori", pct: 70 }] },
+    { type: "snack", items: [{ food: "banana", qty: 1, unit: "piece", pct: 100 }] },
+    { type: "dinner", items: [{ food: "roti", qty: 2, unit: "piece", pct: 80 }, { food: "paneer", qty: 0.3, unit: "katori", pct: 90 }] },
+  ]},
+];
+function enrichItem(it) { return { ...it, source: it.source || "Parent entered", confidence: it.confidence || "Medium" }; }
+
+/* ============================================================================
+   SMALL UI ATOMS — fewer variants, used sparingly, so a badge or a tint
+   always means something rather than decorating every card.
+============================================================================ */
+function Badge({ children, tone = "neutral" }) {
+  const map = {
+    primary: { bg: COLORS.primarySoft, fg: COLORS.primaryDeep },
+    accent: { bg: COLORS.accentSoft, fg: "#8A5A16" },
+    attention: { bg: COLORS.attentionSoft, fg: COLORS.attention },
+    neutral: { bg: "#EDEAE0", fg: COLORS.inkSoft },
+  };
+  const c = map[tone];
+  return (
+    <span style={{ background: c.bg, color: c.fg, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 999, letterSpacing: 0.2, whiteSpace: "nowrap" }}>
+      {children}
+    </span>
+  );
+}
+function TrendGlyph({ direction, size = 15 }) {
+  if (direction === "up") return <TrendingUp size={size} color={COLORS.primary} />;
+  if (direction === "down") return <TrendingDown size={size} color={COLORS.attention} />;
+  return <Minus size={size} color={COLORS.inkFaint} />;
+}
+function trendWord(direction) { return direction === "up" ? "Rising" : direction === "down" ? "Declining" : "Stable"; }
+function Card({ children, style, onClick, accent }) {
+  return (
+    <div onClick={onClick}
+      style={{ background: COLORS.paperRaised, border: `1px solid ${COLORS.border}`,
+        borderLeft: accent ? `3px solid ${accent}` : `1px solid ${COLORS.border}`,
+        borderRadius: 14, padding: 16, ...style }}>
+      {children}
+    </div>
+  );
+}
+function SectionLabel({ children }) {
+  return <div className="bgn-serif" style={{ fontSize: 13, color: COLORS.inkSoft, marginBottom: 8 }}>{children}</div>;
+}
+function PrimaryButton({ children, onClick, disabled, style, icon: Icon }) {
+  return (
+    <button onClick={onClick} disabled={disabled} className="bgn-tap"
+      style={{ background: disabled ? COLORS.inkFaint : COLORS.primary, color: "#fff", border: "none", borderRadius: 12,
+        padding: "13px 16px", fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center",
+        gap: 8, width: "100%", cursor: disabled ? "not-allowed" : "pointer", ...style }}>
+      {Icon && <Icon size={16} />} {children}
+    </button>
+  );
+}
+function GhostButton({ children, onClick, style, icon: Icon }) {
+  return (
+    <button onClick={onClick} className="bgn-tap"
+      style={{ background: "transparent", color: COLORS.primary, border: `1px solid ${COLORS.primary}`, borderRadius: 12,
+        padding: "10px 14px", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center",
+        gap: 6, cursor: "pointer", ...style }}>
+      {Icon && <Icon size={15} />} {children}
+    </button>
+  );
+}
+function TextField({ label, ...props }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label className="bgn-label">{label}</label>
+      <input className="bgn-input" {...props} />
+    </div>
+  );
+}
+
+/* ============================================================================
+   ONBOARDING — from scratch: name, sex, DOB, then today's measurement, with
+   the WHO deviation (Z-score/percentile) computed and shown immediately.
+============================================================================ */
+function WelcomeScreen({ onStart, onDemo }) {
+  return (
+    <div className="bgn-fade-in" style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", padding: "10px 4px" }}>
+      <div style={{ textAlign: "center", marginBottom: 36 }}>
+        <div style={{ width: 56, height: 56, borderRadius: 16, background: COLORS.primarySoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
+          <Baby size={28} color={COLORS.primaryDeep} />
+        </div>
+        <div className="bgn-serif" style={{ fontSize: 22, fontWeight: 600, marginBottom: 8 }}>Growth &amp; Nutrition</div>
+        <div style={{ fontSize: 14, color: COLORS.inkSoft, lineHeight: 1.6, maxWidth: 300, margin: "0 auto" }}>
+          Track growth against WHO standards and see how it connects to what your baby actually eats.
+        </div>
+      </div>
+      <PrimaryButton onClick={onStart} icon={Plus} style={{ marginBottom: 10 }}>Add your baby</PrimaryButton>
+      <button onClick={onDemo} className="bgn-tap" style={{ background: "none", border: "none", color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, padding: 12, cursor: "pointer" }}>
+        See a demo first
+      </button>
+    </div>
+  );
+}
+
+function ProfileFormScreen({ onNext, onBack }) {
+  const [name, setName] = useState("");
+  const [sex, setSex] = useState("M");
+  const [dob, setDob] = useState("");
+  const [preterm, setPreterm] = useState(false);
+  const [gestWeeks, setGestWeeks] = useState("");
+  const canContinue = name.trim().length > 0 && dob && (!preterm || gestWeeks);
+
+  return (
+    <div className="bgn-fade-in">
+      <button onClick={onBack} className="bgn-tap" style={{ background: "none", border: "none", cursor: "pointer", marginBottom: 14, color: COLORS.inkSoft, display: "flex", alignItems: "center", gap: 4, padding: 0, fontSize: 13 }}>
+        <ArrowLeft size={15} /> Back
+      </button>
+      <div className="bgn-serif" style={{ fontSize: 19, fontWeight: 600, marginBottom: 4 }}>Let's understand your baby's growth</div>
+      <div style={{ fontSize: 13, color: COLORS.inkSoft, marginBottom: 22 }}>Step 1 of 2 — baby's details</div>
+
+      <TextField label="Baby's name" placeholder="e.g. Aarav" value={name} onChange={(e) => setName(e.target.value)} />
+
+      <div style={{ marginBottom: 16 }}>
+        <label className="bgn-label">Sex</label>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[{ id: "M", label: "Boy" }, { id: "F", label: "Girl" }].map((o) => (
+            <button key={o.id} onClick={() => setSex(o.id)} className="bgn-tap"
+              style={{ flex: 1, padding: "12px 0", borderRadius: 12, cursor: "pointer", fontWeight: 600, fontSize: 14,
+                border: `1.5px solid ${sex === o.id ? COLORS.primary : COLORS.border}`,
+                background: sex === o.id ? COLORS.primarySoft : "#fff", color: COLORS.ink }}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <TextField label="Date of birth" type="date" max={todayISO()} value={dob} onChange={(e) => setDob(e.target.value)} />
+
+      <div style={{ marginBottom: 16 }}>
+        <label className="bgn-label">Was baby born preterm?</label>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[{ v: false, label: "No" }, { v: true, label: "Yes" }].map((o) => (
+            <button key={String(o.v)} onClick={() => setPreterm(o.v)} className="bgn-tap"
+              style={{ flex: 1, padding: "12px 0", borderRadius: 12, cursor: "pointer", fontWeight: 600, fontSize: 14,
+                border: `1.5px solid ${preterm === o.v ? COLORS.primary : COLORS.border}`,
+                background: preterm === o.v ? COLORS.primarySoft : "#fff", color: COLORS.ink }}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {preterm && (
+        <div className="bgn-fade-in">
+          <TextField label="Gestational age at birth (weeks)" type="number" min="22" max="36" placeholder="e.g. 34"
+            value={gestWeeks} onChange={(e) => setGestWeeks(e.target.value)} />
+          <div style={{ fontSize: 12, color: COLORS.inkSoft, marginTop: -8, marginBottom: 16, lineHeight: 1.5 }}>
+            Corrected age will be used for growth calculations, since that's more accurate for babies born early.
+          </div>
+        </div>
+      )}
+
+      <PrimaryButton disabled={!canContinue} onClick={() => onNext({ name: name.trim(), sex, dob, preterm, gestationalAgeWeeks: gestWeeks ? Number(gestWeeks) : 40 })}>
+        Continue
+      </PrimaryButton>
+    </div>
+  );
+}
+
+function MeasurementFormScreen({ baby, onSubmit, onBack, title = "Today's measurements", subtitle = "Step 2 of 2" }) {
+  const [date, setDate] = useState(todayISO());
+  const [weight, setWeight] = useState("");
+  const [length, setLength] = useState("");
+  const [hc, setHc] = useState("");
+  const canSubmit = weight && length && hc && date;
+
+  return (
+    <div className="bgn-fade-in">
+      <button onClick={onBack} className="bgn-tap" style={{ background: "none", border: "none", cursor: "pointer", marginBottom: 14, color: COLORS.inkSoft, display: "flex", alignItems: "center", gap: 4, padding: 0, fontSize: 13 }}>
+        <ArrowLeft size={15} /> Back
+      </button>
+      <div className="bgn-serif" style={{ fontSize: 19, fontWeight: 600, marginBottom: 4 }}>{title}</div>
+      <div style={{ fontSize: 13, color: COLORS.inkSoft, marginBottom: 22 }}>{subtitle}</div>
+
+      <TextField label="Measurement date" type="date" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
+      <TextField label="Weight (kg)" type="number" step="0.01" placeholder="e.g. 8.4" value={weight} onChange={(e) => setWeight(e.target.value)} />
+      <TextField label="Length / height (cm)" type="number" step="0.1" placeholder="e.g. 75.0" value={length} onChange={(e) => setLength(e.target.value)} />
+      <TextField label="Head circumference (cm)" type="number" step="0.1" placeholder="e.g. 45.8" value={hc} onChange={(e) => setHc(e.target.value)} />
+
+      <PrimaryButton disabled={!canSubmit} icon={Activity}
+        onClick={() => onSubmit({ date, weight: Number(weight), length: Number(length), hc: Number(hc) })}>
+        Calculate growth
+      </PrimaryButton>
+    </div>
+  );
+}
+
+function ResultScreen({ baby, measurement, growth, ageMonths, correctedMonths, onContinue, continueLabel = "Continue to dashboard" }) {
+  const rows = [
+    { label: "Weight", value: `${measurement.weight} kg`, p: growth.pWeight, z: growth.zWeight },
+    { label: "Length", value: `${measurement.length} cm`, p: growth.pLength, z: growth.zLength },
+    { label: "Head circumference", value: `${measurement.hc} cm`, p: growth.pHc, z: growth.zHc },
+    { label: "BMI", value: `${round1(growth.bmi)} kg/m²`, p: growth.pBmi, z: growth.zBmi },
+  ];
+  const usedCorrected = Math.abs(correctedMonths - ageMonths) > 0.1;
+  return (
+    <div className="bgn-fade-in">
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <Badge tone="primary">Calculated just now</Badge>
+        <div className="bgn-serif" style={{ fontSize: 19, fontWeight: 600, marginTop: 10 }}>
+          {baby.name}'s deviation from the WHO standard
+        </div>
+      </div>
+      {rows.map((r) => (
+        <Card key={r.label} style={{ marginBottom: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 600 }}>{r.label}</div>
+              <div style={{ fontSize: 12, color: COLORS.inkFaint }}>{r.value}</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div className="bgn-serif" style={{ fontSize: 22, fontWeight: 600 }}>{ordinal(r.p)}</div>
+              <div style={{ fontSize: 11, color: COLORS.inkFaint }}>percentile · Z {r.z >= 0 ? "+" : ""}{round1(r.z)}</div>
+            </div>
+          </div>
+        </Card>
+      ))}
+      <div style={{ fontSize: 12, color: COLORS.inkSoft, lineHeight: 1.6, margin: "14px 2px 20px" }}>
+        Compared against the WHO Child Growth Standards for {baby.sex === "M" ? "boys" : "girls"} at{" "}
+        {round1(correctedMonths)} months{usedCorrected ? " corrected age" : ""}.
+        {usedCorrected && ` (${baby.name} was born ${baby.gestationalAgeWeeks} weeks — chronological age is ${round1(ageMonths)} months.)`}
+      </div>
+      <PrimaryButton onClick={onContinue} icon={Check}>{continueLabel}</PrimaryButton>
+    </div>
+  );
+}
+
+/* ============================================================================
+   ADD MEASUREMENT (ongoing tracking, reachable from Growth screen)
+============================================================================ */
+function AddMeasurementFlow({ baby, onClose, onSave }) {
+  const [step, setStep] = useState("form");
+  const [pending, setPending] = useState(null);
+
+  function handleSubmit(m) {
+    const ageMonths = ageInMonths(baby.dob, m.date);
+    const correctedMonths = correctedAgeMonths(ageMonths, baby.gestationalAgeWeeks, baby.preterm);
+    const growth = computeGrowth(baby.sex, correctedMonths, m.weight, m.length, m.hc);
+    setPending({ m, ageMonths, correctedMonths, growth });
+    setStep("result");
+  }
+  function handleConfirm() {
+    onSave({
+      ageMonths: round1(pending.ageMonths), label: `${round1(pending.ageMonths)} months`,
+      weight: pending.m.weight, length: pending.m.length, hc: pending.m.hc,
+      source: "Parent entered", confidence: "Medium",
+    });
+  }
+
+  return (
+    <div style={{ position: "absolute", inset: 0, background: COLORS.paper, zIndex: 20, display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "16px 18px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+        <button onClick={onClose} className="bgn-tap" style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} /></button>
+        <div className="bgn-serif" style={{ fontSize: 16, fontWeight: 600 }}>Add measurement</div>
+      </div>
+      <div className="bgn-scroll" style={{ flex: 1, overflowY: "auto", padding: 18 }}>
+        {step === "form" && (
+          <MeasurementFormScreen baby={baby} title="New measurement" subtitle={`for ${baby.name}`} onBack={onClose} onSubmit={handleSubmit} />
+        )}
+        {step === "result" && pending && (
+          <ResultScreen baby={baby} measurement={pending.m} growth={pending.growth} ageMonths={pending.ageMonths}
+            correctedMonths={pending.correctedMonths} onContinue={handleConfirm} continueLabel="Save to growth chart" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   GROWTH SCREEN
+============================================================================ */
+const INDICATOR_CONFIG = {
+  weight: { key: "wfa", label: "Weight-for-age", unit: "kg", xLabel: "Age (months)", field: "weight", getX: (m) => m.ageMonths, xMin: 0, xMax: 24, step: 1 },
+  length: { key: "lhfa", label: "Length-for-age", unit: "cm", xLabel: "Age (months)", field: "length", getX: (m) => m.ageMonths, xMin: 0, xMax: 24, step: 1 },
+  hc:     { key: "hcfa", label: "Head circumference-for-age", unit: "cm", xLabel: "Age (months)", field: "hc", getX: (m) => m.ageMonths, xMin: 0, xMax: 24, step: 1 },
+  wfl:    { key: "wfl", label: "Weight-for-length", unit: "kg", xLabel: "Length (cm)", field: "weight", getX: (m) => m.length, xMin: 45, xMax: 85, step: 1 },
+  bmi:    { key: "bmifa", label: "BMI-for-age", unit: "kg/m²", xLabel: "Age (months)", field: "bmi", getX: (m) => m.ageMonths, xMin: 0, xMax: 24, step: 1 },
+};
+
+function TrajectoryChart({ indicatorId, measurements, sex }) {
+  const cfg = INDICATOR_CONFIG[indicatorId];
+  const table = TABLES[sex][cfg.key];
+  const xs = [];
+  for (let x = cfg.xMin; x <= cfg.xMax; x += cfg.step) xs.push(x);
+  const bandData = xs.map((x) => {
+    const lms = lookupLMS(table, x);
+    return { x, low: round1(valueFromZ(-2, lms)), mid: round1(valueFromZ(0, lms)), high: round1(valueFromZ(2, lms)) };
+  });
+  const childPoints = measurements.map((m) => ({ x: cfg.getX(m), y: m[cfg.field] })).sort((a, b) => a.x - b.x);
+  return (
+    <div>
+      <ResponsiveContainer width="100%" height={210}>
+        <ComposedChart margin={{ top: 8, right: 12, left: -18, bottom: 4 }}>
+          <CartesianGrid stroke={COLORS.gridLine} strokeDasharray="2 4" />
+          <XAxis dataKey="x" type="number" domain={[cfg.xMin, cfg.xMax]} tick={{ fontSize: 10, fill: COLORS.inkSoft }}
+            label={{ value: cfg.xLabel, position: "insideBottom", offset: -2, fontSize: 10, fill: COLORS.inkSoft }} />
+          <YAxis type="number" tick={{ fontSize: 10, fill: COLORS.inkSoft }} width={34}
+            label={{ value: cfg.unit, angle: -90, position: "insideLeft", fontSize: 10, fill: COLORS.inkSoft }} />
+          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: `1px solid ${COLORS.border}` }}
+            formatter={(v, name) => [`${round1(v)} ${cfg.unit}`, name]} labelFormatter={(l) => `${cfg.xLabel}: ${l}`} />
+          <Line data={bandData} dataKey="low" stroke={COLORS.band} strokeWidth={1} dot={false} isAnimationActive={false} name="3rd percentile" />
+          <Line data={bandData} dataKey="mid" stroke={COLORS.primary} strokeWidth={1.5} strokeDasharray="4 3" dot={false} isAnimationActive={false} name="Median (50th)" />
+          <Line data={bandData} dataKey="high" stroke={COLORS.band} strokeWidth={1} dot={false} isAnimationActive={false} name="97th percentile" />
+          <Line data={childPoints} dataKey="y" stroke={COLORS.accent} strokeWidth={2.5}
+            dot={{ r: 4, fill: COLORS.accent, stroke: "#fff", strokeWidth: 1 }} isAnimationActive={false} name={"Recorded"} />
+        </ComposedChart>
+      </ResponsiveContainer>
+      <div style={{ fontSize: 11, color: COLORS.inkFaint, marginTop: 2, lineHeight: 1.5 }}>
+        Grey lines: WHO reference range (3rd–97th percentile) and median for {sex === "M" ? "boys" : "girls"}. Marigold: recorded measurements.
+      </div>
+    </div>
+  );
+}
+
+function GrowthOverviewCard({ label, percentile, z, trend, viewMode, onClick, active }) {
+  return (
+    <button onClick={onClick} className="bgn-tap"
+      style={{ textAlign: "left", flex: 1, background: active ? COLORS.primarySoft : "#fff",
+        border: `1px solid ${active ? COLORS.primary : COLORS.border}`, borderRadius: 14, padding: "12px 10px", cursor: "pointer" }}>
+      <div style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600, marginBottom: 4 }}>{label}</div>
+      <div className="bgn-serif" style={{ fontSize: 21, fontWeight: 600, color: COLORS.ink }}>{ordinal(percentile)}</div>
+      {viewMode === "clinical" && <div style={{ fontSize: 10.5, color: COLORS.inkFaint, marginBottom: 6 }}>Z {z >= 0 ? "+" : ""}{round1(z)}</div>}
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: viewMode === "parent" ? 6 : 0 }}>
+        <TrendGlyph direction={trend} size={12} />
+        <span style={{ fontSize: 10.5, color: COLORS.inkSoft }}>{trendWord(trend)}</span>
+      </div>
+    </button>
+  );
+}
+
+function GrowthScreen({ baby, growthResults, viewMode, onAddMeasurement }) {
+  const [indicator, setIndicator] = useState("weight");
+  const [showClinical, setShowClinical] = useState(false);
+  const latest = growthResults[growthResults.length - 1];
+  const prev = growthResults[growthResults.length - 2] || latest;
+  const singlePoint = growthResults.length < 2;
+
+  const rows = [
+    { key: "weight", label: "Weight-for-age", z: latest.zWeight, p: latest.pWeight, dz: latest.zWeight - prev.zWeight },
+    { key: "length", label: "Length-for-age", z: latest.zLength, p: latest.pLength, dz: latest.zLength - prev.zLength },
+    { key: "wfl",    label: "Weight-for-length", z: latest.zWfl, p: latest.pWfl, dz: latest.zWfl - prev.zWfl },
+    { key: "bmi",    label: "BMI-for-age", z: latest.zBmi, p: latest.pBmi, dz: latest.zBmi - prev.zBmi },
+    { key: "hc",     label: "Head circumference-for-age", z: latest.zHc, p: latest.pHc, dz: latest.zHc - prev.zHc },
+  ].map((r) => ({ ...r, trend: r.dz > 0.2 ? "up" : r.dz < -0.2 ? "down" : "flat" }));
+
+  const overallFirst = growthResults[0];
+  const weightDelta = latest.zWeight - overallFirst.zWeight;
+  const patternText = singlePoint
+    ? "This is the first recorded measurement — a trend will appear once another is added."
+    : Math.abs(weightDelta) > 0.6
+    ? `Weight-for-age has moved ${weightDelta < 0 ? "downward" : "upward"} over the ${growthResults.length} recorded measurements, while length and head circumference have tracked closer to birth trajectory.`
+    : "Growth pattern appears relatively stable across weight, length and head circumference.";
+
+  return (
+    <div className="bgn-fade-in" style={{ paddingBottom: 12 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        <GrowthOverviewCard label="Weight" percentile={latest.pWeight} z={latest.zWeight} trend={rows[0].trend} viewMode={viewMode} active={indicator === "weight"} onClick={() => setIndicator("weight")} />
+        <GrowthOverviewCard label="Length" percentile={latest.pLength} z={latest.zLength} trend={rows[1].trend} viewMode={viewMode} active={indicator === "length"} onClick={() => setIndicator("length")} />
+        <GrowthOverviewCard label="Head circ." percentile={latest.pHc} z={latest.zHc} trend={rows[3].trend} viewMode={viewMode} active={indicator === "hc"} onClick={() => setIndicator("hc")} />
+      </div>
+
+      <Card style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+          {Object.entries(INDICATOR_CONFIG).map(([id, c]) => (
+            <button key={id} onClick={() => setIndicator(id)} className="bgn-tap"
+              style={{ fontSize: 11.5, fontWeight: 600, padding: "6px 10px", borderRadius: 999, cursor: "pointer",
+                border: `1px solid ${indicator === id ? COLORS.primary : COLORS.border}`,
+                background: indicator === id ? COLORS.primary : "transparent", color: indicator === id ? "#fff" : COLORS.inkSoft }}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+        <TrajectoryChart indicatorId={indicator} measurements={growthResults} sex={baby.sex} />
+      </Card>
+
+      <Card accent={COLORS.primary} style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.primaryDeep, marginBottom: 4 }}>Growth pattern</div>
+        <div style={{ fontSize: 13, color: COLORS.ink, lineHeight: 1.5 }}>{patternText}</div>
+      </Card>
+
+      <GhostButton icon={Plus} style={{ width: "100%", marginBottom: 14 }} onClick={onAddMeasurement}>Add measurement</GhostButton>
+
+      {viewMode === "clinical" && (
+        <Card>
+          <button onClick={() => setShowClinical((s) => !s)} className="bgn-tap"
+            style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <span style={{ fontWeight: 600, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}><Stethoscope size={15} /> Clinical detail</span>
+            <ChevronDown size={18} style={{ transform: showClinical ? "rotate(180deg)" : "none", transition: "0.15s" }} />
+          </button>
+          {showClinical && (
+            <div className="bgn-fade-in" style={{ marginTop: 12 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+                <thead>
+                  <tr style={{ textAlign: "left", color: COLORS.inkFaint, fontSize: 10.5 }}>
+                    <th style={{ paddingBottom: 6, fontWeight: 600 }}>Measurement</th>
+                    <th style={{ paddingBottom: 6, fontWeight: 600, textAlign: "right" }}>Z-score</th>
+                    <th style={{ paddingBottom: 6, fontWeight: 600, textAlign: "right" }}>Percentile</th>
+                    <th style={{ paddingBottom: 6, fontWeight: 600, textAlign: "center" }}>Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.key} style={{ borderTop: `1px solid ${COLORS.border}` }}>
+                      <td style={{ padding: "8px 0" }}>{r.label}</td>
+                      <td style={{ textAlign: "right" }}>{r.z >= 0 ? "+" : ""}{round1(r.z)}</td>
+                      <td style={{ textAlign: "right" }}>{ordinal(r.p)}</td>
+                      <td style={{ textAlign: "center" }}><TrendGlyph direction={r.trend} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{ fontSize: 11.5, color: COLORS.inkSoft, marginTop: 12, lineHeight: 1.6 }}>
+                Computed via the WHO Child Growth Standards (2006) LMS method: Z = (((measurement ÷ M)^L) − 1) ÷ (L × S),
+                using {baby.name}'s recorded {baby.preterm ? "corrected " : ""}age and sex. Raw measurements are stored alongside every calculated value.
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================================
+   NUTRITION SCREEN
+============================================================================ */
+function NutritionRow({ label, target, consumed, unit, viewMode }) {
+  const pct = target > 0 ? Math.min(999, Math.round((consumed / target) * 100)) : 0;
+  const barPct = Math.min(100, pct);
+  const color = pct >= 85 ? COLORS.primary : pct >= 60 ? COLORS.accent : COLORS.attention;
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 4 }}>
+        <span style={{ fontWeight: 600 }}>{label}</span>
+        <span style={{ color: COLORS.inkSoft }}>{viewMode === "clinical" ? `${round1(consumed)}${unit} / ${target}${unit} · ` : ""}{pct}%</span>
+      </div>
+      <div style={{ height: 7, borderRadius: 999, background: COLORS.border, overflow: "hidden" }}>
+        <div style={{ width: `${barPct}%`, height: "100%", background: color, borderRadius: 999 }} />
+      </div>
+    </div>
+  );
+}
+
+function TodayMealList({ meals }) {
+  const loggedTypes = new Set(meals.map((m) => m.type));
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      {MEAL_TYPES.map((mt) => (
+        <div key={mt.id} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, padding: "5px 10px",
+          borderRadius: 999, background: loggedTypes.has(mt.id) ? COLORS.primarySoft : "#EDEAE0", color: loggedTypes.has(mt.id) ? COLORS.primaryDeep : COLORS.inkFaint }}>
+          {loggedTypes.has(mt.id) ? <Check size={12} /> : <Minus size={12} />} {mt.label}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MealCard({ meal, viewMode }) {
+  const [open, setOpen] = useState(false);
+  const nutrients = sumNutrients(meal.items.map((it) => itemNutrients(it).consumed));
+  const offered = sumNutrients(meal.items.map((it) => itemNutrients(it).offered));
+  const rate = offered.kcal > 0 ? Math.round((nutrients.kcal / offered.kcal) * 100) : 0;
+  const label = MEAL_TYPES.find((m) => m.id === meal.type)?.label || meal.type;
+  return (
+    <Card style={{ marginBottom: 10 }}>
+      <button onClick={() => setOpen((o) => !o)} className="bgn-tap"
+        style={{ width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 13.5 }}>{label}</div>
+            <div style={{ fontSize: 11.5, color: COLORS.inkSoft, marginTop: 2 }}>
+              {meal.items.length} item{meal.items.length > 1 ? "s" : ""} · ~{round0(nutrients.kcal)} kcal consumed
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Badge tone={rate >= 70 ? "primary" : rate >= 40 ? "accent" : "attention"}>{rate}% eaten</Badge>
+            <ChevronDown size={16} style={{ transform: open ? "rotate(180deg)" : "none", transition: "0.15s" }} />
+          </div>
+        </div>
+      </button>
+      {open && (
+        <div className="bgn-fade-in" style={{ marginTop: 12 }}>
+          {meal.items.map((it, i) => {
+            const g = gramsForServing(it.food, it.unit, it.qty);
+            return (
+              <div key={i} style={{ marginBottom: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5 }}>
+                  <span>{FOOD_DB[it.food].name} · {it.qty} {it.unit} ({round0(g)} g)</span>
+                  <span style={{ color: COLORS.inkSoft }}>{it.pct}% eaten</span>
+                </div>
+                <div style={{ height: 6, borderRadius: 999, background: COLORS.border, marginTop: 3 }}>
+                  <div style={{ width: `${it.pct}%`, height: "100%", borderRadius: 999, background: COLORS.accent }} />
+                </div>
+              </div>
+            );
+          })}
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: COLORS.inkFaint, marginTop: 8, borderTop: `1px solid ${COLORS.border}`, paddingTop: 8 }}>
+            <span>Offered: ~{round0(offered.kcal)} kcal</span>
+            <span>Consumed: ~{round0(nutrients.kcal)} kcal</span>
+          </div>
+          {viewMode === "clinical" && (
+            <div style={{ marginTop: 6 }}><Badge tone="neutral">{meal.items[0]?.source || "Parent entered"}</Badge></div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function AddMealFlow({ onClose, onSave }) {
+  const [step, setStep] = useState("type");
+  const [mealType, setMealType] = useState("breakfast");
+  const [mode, setMode] = useState("manual");
+  const [items, setItems] = useState([]);
+  const [draftFood, setDraftFood] = useState("rice");
+  const [draftQty, setDraftQty] = useState(1);
+  const [draftUnit, setDraftUnit] = useState("bowl");
+  const [aiText, setAiText] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [staged, setStaged] = useState(null);
+
+  function addManualItem() { setItems((prev) => [...prev, { food: draftFood, qty: Number(draftQty) || 1, unit: draftUnit, pct: 100 }]); }
+  function removeItem(idx) { setItems((prev) => prev.filter((_, i) => i !== idx)); }
+  function updatePct(idx, pct) { setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, pct } : it))); }
+
+  async function runAiParse() {
+    setAiLoading(true); setAiError(""); setStaged(null);
+    try {
+      const foodList = Object.entries(FOOD_DB).map(([id, f]) => `${id} (${f.name})`).join(", ");
+      const sys = `You convert a parent's free-text description of a baby's meal into structured JSON for a nutrition app. ` +
+        `Valid food ids: ${foodList}. Valid units: piece, katori, bowl, cup, tsp, tbsp, glass. ` +
+        `Respond with ONLY a JSON array, no prose, no markdown code fences. Each element must look like ` +
+        `{"food": "<id from the valid list, or null if nothing matches well>", "rawFood": "<original words if food is null>", ` +
+        `"qty": <number>, "unit": "<one of the valid units>", "pct": <integer 0-100, how much the baby ate; 100 if not mentioned>}. ` +
+        `Interpret words like half=50, most/almost all=85, a little=15, some=50, all/finished=100, none/didn't eat=0.`;
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, system: sys, messages: [{ role: "user", content: aiText }] }),
+      });
+      const data = await resp.json();
+      const textBlock = (data.content || []).find((b) => b.type === "text");
+      if (!textBlock) throw new Error("empty response");
+      const cleaned = textBlock.text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      setStaged(parsed.map((p) => ({
+        food: p.food && FOOD_DB[p.food] ? p.food : null,
+        rawFood: p.rawFood || "",
+        qty: Number(p.qty) || 1,
+        unit: ["piece", "katori", "bowl", "cup", "tsp", "tbsp", "glass"].includes(p.unit) ? p.unit : "katori",
+        pct: Math.max(0, Math.min(100, Math.round(Number(p.pct)))) || 0,
+      })));
+    } catch (e) {
+      setAiError("Couldn't structure that automatically — please add the items manually below instead.");
+    } finally { setAiLoading(false); }
+  }
+  function updateStaged(idx, patch) { setStaged((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s))); }
+  function removeStaged(idx) { setStaged((prev) => prev.filter((_, i) => i !== idx)); }
+  function confirmStaged() {
+    const clean = staged.filter((s) => s.food).map((s) => ({ food: s.food, qty: s.qty, unit: s.unit, pct: s.pct }));
+    setItems(clean); setStep("summary");
+  }
+
+  const offered = sumNutrients(items.map((it) => itemNutrients(it).offered));
+  const consumed = sumNutrients(items.map((it) => itemNutrients(it).consumed));
+  const rate = offered.kcal > 0 ? Math.round((consumed.kcal / offered.kcal) * 100) : 0;
+
+  return (
+    <div style={{ position: "absolute", inset: 0, background: COLORS.paper, zIndex: 20, display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "16px 18px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+        <button onClick={onClose} className="bgn-tap" style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} /></button>
+        <div className="bgn-serif" style={{ fontSize: 16, fontWeight: 600 }}>Log a meal</div>
+      </div>
+      <div className="bgn-scroll" style={{ flex: 1, overflowY: "auto", padding: 18 }}>
+        {step === "type" && (
+          <div className="bgn-fade-in">
+            <SectionLabel>What meal is this?</SectionLabel>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+              {MEAL_TYPES.map((mt) => (
+                <button key={mt.id} onClick={() => setMealType(mt.id)} className="bgn-tap"
+                  style={{ padding: "16px 10px", borderRadius: 14, cursor: "pointer", fontWeight: 600, fontSize: 14,
+                    border: `1.5px solid ${mealType === mt.id ? COLORS.primary : COLORS.border}`,
+                    background: mealType === mt.id ? COLORS.primarySoft : "#fff", color: COLORS.ink }}>
+                  {mt.label}
+                </button>
+              ))}
+            </div>
+            <PrimaryButton onClick={() => setStep("items")}>Continue</PrimaryButton>
+          </div>
+        )}
+
+        {step === "items" && (
+          <div className="bgn-fade-in">
+            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+              <button onClick={() => setMode("manual")} className="bgn-tap" style={{ flex: 1, padding: "9px 0", borderRadius: 10, cursor: "pointer", fontSize: 12.5, fontWeight: 600,
+                border: `1px solid ${mode === "manual" ? COLORS.primary : COLORS.border}`, background: mode === "manual" ? COLORS.primary : "transparent", color: mode === "manual" ? "#fff" : COLORS.inkSoft }}>
+                Add manually
+              </button>
+              <button onClick={() => setMode("ai")} className="bgn-tap" style={{ flex: 1, padding: "9px 0", borderRadius: 10, cursor: "pointer", fontSize: 12.5, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                border: `1px solid ${mode === "ai" ? COLORS.primary : COLORS.border}`, background: mode === "ai" ? COLORS.primary : "transparent", color: mode === "ai" ? "#fff" : COLORS.inkSoft }}>
+                <Sparkles size={13} /> Describe in words
+              </button>
+            </div>
+
+            {mode === "manual" && (
+              <div>
+                <Card style={{ marginBottom: 14 }}>
+                  <SectionLabel>Food offered</SectionLabel>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                    <select value={draftFood} onChange={(e) => { setDraftFood(e.target.value); setDraftUnit(unitOptions(e.target.value)[0]); }}
+                      style={{ flex: 1, padding: "9px 8px", borderRadius: 10, border: `1px solid ${COLORS.border}`, fontSize: 13, background: "#fff" }}>
+                      {Object.entries(FOOD_DB).map(([id, f]) => <option key={id} value={id}>{f.name}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input type="number" min="0" step="0.5" value={draftQty} onChange={(e) => setDraftQty(e.target.value)}
+                      style={{ width: 70, padding: "9px 8px", borderRadius: 10, border: `1px solid ${COLORS.border}`, fontSize: 13 }} />
+                    <select value={draftUnit} onChange={(e) => setDraftUnit(e.target.value)}
+                      style={{ flex: 1, padding: "9px 8px", borderRadius: 10, border: `1px solid ${COLORS.border}`, fontSize: 13, background: "#fff" }}>
+                      {unitOptions(draftFood).map((u) => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                    <button onClick={addManualItem} className="bgn-tap" style={{ background: COLORS.accent, border: "none", borderRadius: 10, width: 40, color: "#fff", cursor: "pointer" }}>
+                      <Plus size={18} style={{ margin: "0 auto" }} />
+                    </button>
+                  </div>
+                </Card>
+                {items.length > 0 && (
+                  <div style={{ marginBottom: 14 }}>
+                    <SectionLabel>Added ({items.length})</SectionLabel>
+                    {items.map((it, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 4px", borderBottom: `1px solid ${COLORS.border}`, fontSize: 13 }}>
+                        <span>{FOOD_DB[it.food].name} — {it.qty} {it.unit}</span>
+                        <button onClick={() => removeItem(i)} className="bgn-tap" style={{ background: "none", border: "none", cursor: "pointer", color: COLORS.attention }}><Trash2 size={15} /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <PrimaryButton disabled={items.length === 0} onClick={() => setStep("consume")}>Next: how much was eaten</PrimaryButton>
+              </div>
+            )}
+
+            {mode === "ai" && (
+              <div>
+                <Card style={{ marginBottom: 12 }}>
+                  <SectionLabel>Describe what you gave the baby</SectionLabel>
+                  <textarea value={aiText} onChange={(e) => setAiText(e.target.value)} rows={3} placeholder="e.g. 1 bowl rice, half katori dal and some vegetables. Baby ate about half of it."
+                    style={{ width: "100%", padding: 10, borderRadius: 10, border: `1px solid ${COLORS.border}`, fontSize: 13, fontFamily: "inherit", resize: "none" }} />
+                  <div style={{ marginTop: 10 }}>
+                    <GhostButton icon={Sparkles} onClick={runAiParse} style={{ width: "100%" }}>{aiLoading ? "Reading…" : "Structure this for me"}</GhostButton>
+                  </div>
+                  {aiError && <div style={{ fontSize: 12, color: COLORS.attention, marginTop: 8 }}>{aiError}</div>}
+                </Card>
+
+                {staged && (
+                  <div className="bgn-fade-in">
+                    <SectionLabel>AI understood — please review before saving</SectionLabel>
+                    {staged.map((s, i) => (
+                      <Card key={i} style={{ marginBottom: 8 }}>
+                        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                          <select value={s.food || ""} onChange={(e) => updateStaged(i, { food: e.target.value })}
+                            style={{ flex: 1, padding: "7px 6px", borderRadius: 8, border: `1px solid ${s.food ? COLORS.border : COLORS.attention}`, fontSize: 12.5, background: "#fff" }}>
+                            <option value="" disabled>{s.rawFood ? `"${s.rawFood}" — choose closest food` : "Choose a food"}</option>
+                            {Object.entries(FOOD_DB).map(([id, f]) => <option key={id} value={id}>{f.name}</option>)}
+                          </select>
+                          <button onClick={() => removeStaged(i)} className="bgn-tap" style={{ background: "none", border: "none", cursor: "pointer", color: COLORS.attention }}><X size={16} /></button>
+                        </div>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <input type="number" min="0" step="0.5" value={s.qty} onChange={(e) => updateStaged(i, { qty: Number(e.target.value) })}
+                            style={{ width: 56, padding: "6px 6px", borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 12.5 }} />
+                          <select value={s.unit} onChange={(e) => updateStaged(i, { unit: e.target.value })}
+                            style={{ padding: "6px 6px", borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 12.5, background: "#fff" }}>
+                            {["piece", "katori", "bowl", "cup", "tsp", "tbsp", "glass"].map((u) => <option key={u} value={u}>{u}</option>)}
+                          </select>
+                          <span style={{ fontSize: 12, color: COLORS.inkSoft, marginLeft: "auto" }}>ate {s.pct}%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value={s.pct} onChange={(e) => updateStaged(i, { pct: Number(e.target.value) })} className="bgn-range" style={{ width: "100%", marginTop: 8 }} />
+                      </Card>
+                    ))}
+                    <Badge tone="accent">Lower confidence — AI extracted, please confirm</Badge>
+                    <div style={{ marginTop: 12 }}>
+                      <PrimaryButton icon={Check} disabled={!staged.some((s) => s.food)} onClick={confirmStaged}>Looks right — continue</PrimaryButton>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {step === "consume" && (
+          <div className="bgn-fade-in">
+            <SectionLabel>How much did the baby actually eat?</SectionLabel>
+            {items.map((it, i) => (
+              <Card key={i} style={{ marginBottom: 10 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>{FOOD_DB[it.food].name} <span style={{ color: COLORS.inkFaint, fontWeight: 400 }}>({it.qty} {it.unit})</span></div>
+                <div style={{ height: 8, borderRadius: 999, background: COLORS.border, marginBottom: 8 }}>
+                  <div style={{ width: `${it.pct}%`, height: "100%", borderRadius: 999, background: COLORS.accent }} />
+                </div>
+                <input type="range" min="0" max="100" value={it.pct} onChange={(e) => updatePct(i, Number(e.target.value))} className="bgn-range" style={{ width: "100%", marginBottom: 8 }} />
+                <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                  {QUICK_PCTS.map((q) => (
+                    <button key={q.label} onClick={() => updatePct(i, q.value)} className="bgn-tap"
+                      style={{ fontSize: 10.5, padding: "4px 8px", borderRadius: 999, cursor: "pointer",
+                        border: `1px solid ${it.pct === q.value ? COLORS.primary : COLORS.border}`,
+                        background: it.pct === q.value ? COLORS.primarySoft : "transparent", color: COLORS.ink }}>
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+              </Card>
+            ))}
+            <PrimaryButton onClick={() => setStep("summary")}>See estimated nutrition</PrimaryButton>
+          </div>
+        )}
+
+        {step === "summary" && (
+          <div className="bgn-fade-in">
+            <Card style={{ marginBottom: 14 }}>
+              <SectionLabel>Estimated consumption</SectionLabel>
+              <div className="bgn-serif" style={{ fontSize: 28, fontWeight: 600 }}>{rate}%</div>
+              <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 10 }}>of food offered was estimated eaten</div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: COLORS.inkSoft }}>
+                <span>Offered: ~{round0(offered.kcal)} kcal</span>
+                <span>Consumed: ~{round0(consumed.kcal)} kcal</span>
+              </div>
+            </Card>
+            <Card style={{ marginBottom: 14 }}>
+              <SectionLabel>Estimated nutrients consumed</SectionLabel>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 12.5 }}>
+                <div>Protein <strong>{round1(consumed.protein)} g</strong></div>
+                <div>Iron <strong>{round1(consumed.iron)} mg</strong></div>
+                <div>Calcium <strong>{round0(consumed.calcium)} mg</strong></div>
+                <div>Fibre <strong>{round1(consumed.fiber)} g</strong></div>
+              </div>
+            </Card>
+            <PrimaryButton icon={Check} onClick={() => onSave({ type: mealType, items })}>Save meal</PrimaryButton>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NutritionScreen({ ageMonths, mealsByDay, onAddMeal, todayOffset, viewMode }) {
+  const [addOpen, setAddOpen] = useState(false);
+  const today = mealsByDay.find((d) => d.offset === todayOffset);
+  const totals = sumNutrients(today.meals.flatMap((m) => m.items).map((it) => itemNutrients(it).consumed));
+  const ref = referenceForAge(ageMonths);
+
+  return (
+    <div className="bgn-fade-in" style={{ position: "relative", minHeight: "100%" }}>
+      <Card style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+          <div>
+            <div className="bgn-serif" style={{ fontSize: 26, fontWeight: 600 }}>{round0(totals.kcal)} <span style={{ fontSize: 14, fontWeight: 400, color: COLORS.inkSoft }}>kcal today</span></div>
+          </div>
+          {viewMode === "clinical" && <Badge tone="accent">Estimated</Badge>}
+        </div>
+        <NutritionRow label="Energy" target={ref.kcal} consumed={totals.kcal} unit=" kcal" viewMode={viewMode} />
+        <NutritionRow label="Protein" target={ref.protein} consumed={totals.protein} unit="g" viewMode={viewMode} />
+        <NutritionRow label="Iron" target={ref.iron} consumed={totals.iron} unit="mg" viewMode={viewMode} />
+        <NutritionRow label="Calcium" target={ref.calcium} consumed={totals.calcium} unit="mg" viewMode={viewMode} />
+        {viewMode === "clinical" && (
+          <div style={{ fontSize: 10.5, color: COLORS.inkFaint, marginTop: 6, lineHeight: 1.5 }}>
+            Reference: ICMR-NIN RDA 2020, {ref.label} — full daily allowance; breast milk/formula typically covers part of it.
+          </div>
+        )}
+      </Card>
+
+      <Card style={{ marginBottom: 14 }}>
+        <SectionLabel>Today's meals</SectionLabel>
+        <TodayMealList meals={today.meals} />
+      </Card>
+
+      <div style={{ marginBottom: 90 }}>
+        {today.meals.map((m, i) => <MealCard key={i} meal={m} viewMode={viewMode} />)}
+      </div>
+
+      <button onClick={() => setAddOpen(true)} className="bgn-tap"
+        style={{ position: "absolute", bottom: 8, right: 4, background: COLORS.accent, color: "#fff", border: "none",
+          borderRadius: 999, padding: "13px 18px", display: "flex", alignItems: "center", gap: 7, fontWeight: 600, fontSize: 13.5,
+          boxShadow: "0 4px 14px rgba(219,138,46,0.4)", cursor: "pointer" }}>
+        <Plus size={17} /> Log a meal
+      </button>
+
+      {addOpen && <AddMealFlow onClose={() => setAddOpen(false)} onSave={(meal) => { onAddMeal(meal); setAddOpen(false); }} />}
+    </div>
+  );
+}
+
+/* ============================================================================
+   HOME SCREEN
+============================================================================ */
+function HomeScreen({ baby, growthResults, mealsByDay, todayOffset, ageMonths, viewMode, onNavigate }) {
+  const latest = growthResults[growthResults.length - 1];
+  const first = growthResults[0];
+  const today = mealsByDay.find((d) => d.offset === todayOffset);
+  const totals = sumNutrients(today.meals.flatMap((m) => m.items).map((it) => itemNutrients(it).consumed));
+  const ref = referenceForAge(ageMonths);
+
+  const last7 = mealsByDay.slice(-7);
+  const avgIron = last7.length ? last7.reduce((s, d) => s + sumNutrients(d.meals.flatMap((m) => m.items).map((it) => itemNutrients(it).consumed)).iron, 0) / last7.length : 0;
+  const ironCoveragePct = Math.round((avgIron / ref.iron) * 100);
+  const weightDelta = latest.zWeight - first.zWeight;
+  const singlePoint = growthResults.length < 2;
+  const trendText = singlePoint
+    ? "First measurement recorded. Add another over time to see a trend."
+    : Math.abs(weightDelta) > 0.6
+    ? "Weight trajectory has trended downward over the recorded period, while length and head circumference have stayed closer to birth trajectory."
+    : "Growth trajectory has remained relatively stable over the recorded period.";
+  const missingToday = MEAL_TYPES.filter((mt) => !today.meals.some((m) => m.type === mt.id));
+
+  return (
+    <div className="bgn-fade-in">
+      <div className="bgn-grid-bg" style={{ borderRadius: 18, padding: "18px 16px", marginBottom: 16, border: `1px solid ${COLORS.border}`, background: COLORS.paperRaised }}>
+        <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 2 }}>{baby.name} · {round1(ageMonths)} months · {baby.sex === "M" ? "Boy" : "Girl"}</div>
+        <div className="bgn-serif" style={{ fontSize: 19, fontWeight: 600, marginBottom: 12 }}>What has changed since last time?</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <GrowthOverviewCard label="Weight" percentile={latest.pWeight} z={latest.zWeight} trend={weightDelta < -0.2 ? "down" : weightDelta > 0.2 ? "up" : "flat"} viewMode={viewMode} onClick={() => onNavigate("growth")} />
+          <GrowthOverviewCard label="Length" percentile={latest.pLength} z={latest.zLength} trend="flat" viewMode={viewMode} onClick={() => onNavigate("growth")} />
+          <GrowthOverviewCard label="Head circ." percentile={latest.pHc} z={latest.zHc} trend="flat" viewMode={viewMode} onClick={() => onNavigate("growth")} />
+        </div>
+      </div>
+
+      <Card style={{ marginBottom: 14 }}>
+        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 10 }}>Today's nutrition</div>
+        <div style={{ display: "flex", gap: 18, marginBottom: 12 }}>
+          <div><div className="bgn-serif" style={{ fontSize: 20, fontWeight: 600 }}>{round0(totals.kcal)}</div><div style={{ fontSize: 10.5, color: COLORS.inkFaint }}>kcal</div></div>
+          <div><div className="bgn-serif" style={{ fontSize: 20, fontWeight: 600 }}>{round1(totals.protein)}g</div><div style={{ fontSize: 10.5, color: COLORS.inkFaint }}>protein</div></div>
+          <div><div className="bgn-serif" style={{ fontSize: 20, fontWeight: 600 }}>{round1(totals.iron)}mg</div><div style={{ fontSize: 10.5, color: COLORS.inkFaint }}>iron</div></div>
+        </div>
+        <TodayMealList meals={today.meals} />
+        <button onClick={() => onNavigate("nutrition")} className="bgn-tap" style={{ marginTop: 12, background: "none", border: "none", color: COLORS.primary, fontSize: 12.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 3, cursor: "pointer", padding: 0 }}>
+          Log food <ChevronRight size={14} />
+        </button>
+      </Card>
+
+      <Card accent={COLORS.primary} style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.primaryDeep, marginBottom: 4 }}>Recent trend</div>
+        <div style={{ fontSize: 13, color: COLORS.ink, lineHeight: 1.5 }}>{trendText}</div>
+      </Card>
+
+      {missingToday.length > 0 && missingToday.length < 4 ? (
+        <Card accent={COLORS.accent}>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <AlertCircle size={16} color="#8A5A16" style={{ marginTop: 1 }} />
+            <div style={{ fontSize: 12.5, color: "#5C3E10", lineHeight: 1.5 }}>Food log incomplete today — {missingToday.map((m) => m.label).join(", ")} not yet logged.</div>
+          </div>
+        </Card>
+      ) : (last7.length >= 3 && ironCoveragePct < 70) ? (
+        <Card accent={COLORS.attention}>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <AlertCircle size={16} color={COLORS.attention} style={{ marginTop: 1 }} />
+            <div style={{ fontSize: 12.5, color: COLORS.attention, lineHeight: 1.5 }}>
+              Recorded iron intake has averaged {ironCoveragePct}% of the selected reference over the last {last7.length} days.
+            </div>
+          </div>
+        </Card>
+      ) : null}
+    </div>
+  );
+}
+
+/* ============================================================================
+   TIMELINE
+============================================================================ */
+function TimelineScreen({ growthResults, mealsByDay, ageMonths, viewMode }) {
+  const ref = referenceForAge(ageMonths);
+  return (
+    <div className="bgn-fade-in">
+      <div style={{ position: "relative", paddingLeft: 18 }}>
+        <div style={{ position: "absolute", left: 5, top: 6, bottom: 6, width: 2, background: COLORS.border }} />
+        {growthResults.map((g, idx) => {
+          const isLatest = idx === growthResults.length - 1;
+          let nutritionAvg = null;
+          if (isLatest && mealsByDay.length > 0) {
+            const avg = sumNutrients(mealsByDay.flatMap((d) => d.meals.flatMap((m) => m.items)).map((it) => itemNutrients(it).consumed));
+            Object.keys(avg).forEach((k) => (avg[k] = avg[k] / mealsByDay.length));
+            nutritionAvg = avg;
+          }
+          return (
+            <div key={g.ageMonths} style={{ position: "relative", marginBottom: 22 }}>
+              <div style={{ position: "absolute", left: -18, top: 3, width: 12, height: 12, borderRadius: "50%", background: isLatest ? COLORS.accent : COLORS.primary, border: "2px solid " + COLORS.paper }} />
+              <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 6 }}>{g.label}</div>
+              <div style={{ display: "flex", gap: 14, fontSize: 12, color: COLORS.inkSoft, marginBottom: nutritionAvg ? 6 : 0, flexWrap: "wrap" }}>
+                <span>Wt {g.weight}kg <span style={{ color: COLORS.inkFaint }}>({ordinal(g.pWeight)}{viewMode === "clinical" ? `, Z${g.zWeight >= 0 ? "+" : ""}${round1(g.zWeight)}` : ""})</span></span>
+                <span>Ln {g.length}cm <span style={{ color: COLORS.inkFaint }}>({ordinal(g.pLength)})</span></span>
+                <span>HC {g.hc}cm <span style={{ color: COLORS.inkFaint }}>({ordinal(g.pHc)})</span></span>
+              </div>
+              {nutritionAvg ? (
+                <div style={{ fontSize: 11.5, color: COLORS.inkFaint, background: COLORS.paperRaised, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "7px 10px", display: "inline-block" }}>
+                  Avg over {mealsByDay.length} logged days: ~{round0(nutritionAvg.kcal)} kcal ({Math.round((nutritionAvg.kcal / ref.kcal) * 100)}% of reference) · iron {round1(nutritionAvg.iron)}mg ({Math.round((nutritionAvg.iron / ref.iron) * 100)}%)
+                </div>
+              ) : (
+                <div style={{ fontSize: 11, color: COLORS.inkFaint, fontStyle: "italic" }}>No nutrition log for this period</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   GROWTH + NUTRITION CONNECTION
+============================================================================ */
+function ConnectScreen({ growthResults, mealsByDay, ageMonths }) {
+  const ref = referenceForAge(ageMonths);
+  const hasMeals = mealsByDay.length > 0;
+  const avg = hasMeals ? sumNutrients(mealsByDay.flatMap((d) => d.meals.flatMap((m) => m.items)).map((it) => itemNutrients(it).consumed)) : { kcal: 0, iron: 0 };
+  if (hasMeals) Object.keys(avg).forEach((k) => (avg[k] = avg[k] / mealsByDay.length));
+  const latest = growthResults[growthResults.length - 1];
+  const first = growthResults[0];
+  const weightDelta = latest.zWeight - first.zWeight;
+  const ironPct = Math.round((avg.iron / ref.iron) * 100);
+  const energyPct = Math.round((avg.kcal / ref.kcal) * 100);
+
+  const insight = !hasMeals
+    ? "Log a few days of meals to see how nutrition compares with the growth trend."
+    : (Math.abs(weightDelta) > 0.6 && ironPct < 75)
+    ? `Weight trajectory has changed over the recorded period. The nutrition log over the last ${mealsByDay.length} days also shows recorded iron intake averaging ${ironPct}% of the selected reference. These observations do not establish a cause, but may be useful to discuss with your pediatrician.`
+    : "No strong pattern linking the recorded growth trend and nutrition log stands out yet. Keep logging — the more data recorded, the more meaningful this comparison becomes.";
+
+  return (
+    <div className="bgn-fade-in">
+      {hasMeals && (
+        <Card style={{ marginBottom: 14 }}>
+          <SectionLabel>Last {mealsByDay.length} days</SectionLabel>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 11.5, color: COLORS.inkSoft }}>Avg. energy</div>
+              <div className="bgn-serif" style={{ fontSize: 20, fontWeight: 600 }}>{energyPct}%</div>
+              <div style={{ fontSize: 10.5, color: COLORS.inkFaint }}>of reference</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11.5, color: COLORS.inkSoft }}>Avg. iron</div>
+              <div className="bgn-serif" style={{ fontSize: 20, fontWeight: 600, color: ironPct < 75 ? COLORS.attention : COLORS.ink }}>{ironPct}%</div>
+              <div style={{ fontSize: 10.5, color: COLORS.inkFaint }}>of reference</div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <Card accent={ironPct < 75 && hasMeals ? COLORS.attention : COLORS.primary} style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: COLORS.ink }}>What this may mean</div>
+        <div style={{ fontSize: 13, color: COLORS.ink, lineHeight: 1.6 }}>{insight}</div>
+      </Card>
+      {hasMeals && <GhostButton icon={FileText} style={{ width: "100%" }}>Discuss with pediatrician</GhostButton>}
+    </div>
+  );
+}
+
+/* ============================================================================
+   PROFILE / REPORT
+============================================================================ */
+function ReportView({ baby, growthResults, mealsByDay, ageMonths, onClose }) {
+  const latest = growthResults[growthResults.length - 1];
+  const first = growthResults[0];
+  const ref = referenceForAge(ageMonths);
+  const hasMeals = mealsByDay.length > 0;
+  const avg = hasMeals ? sumNutrients(mealsByDay.flatMap((d) => d.meals.flatMap((m) => m.items)).map((it) => itemNutrients(it).consumed)) : null;
+  if (avg) Object.keys(avg).forEach((k) => (avg[k] = avg[k] / mealsByDay.length));
+  const totalMeals = mealsByDay.reduce((s, d) => s + d.meals.length, 0);
+  const weightDelta = latest.zWeight - first.zWeight;
+
+  return (
+    <div style={{ position: "absolute", inset: 0, background: COLORS.paper, zIndex: 20, display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "16px 18px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+        <button onClick={onClose} className="bgn-tap" style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} /></button>
+        <div className="bgn-serif" style={{ fontSize: 16, fontWeight: 600 }}>Pediatrician report</div>
+      </div>
+      <div className="bgn-scroll" style={{ flex: 1, overflowY: "auto", padding: 18 }}>
+        <Card style={{ marginBottom: 12 }}>
+          <SectionLabel>Baby profile</SectionLabel>
+          <div style={{ fontSize: 13, lineHeight: 1.8 }}>
+            Name: {baby.name}<br />Age: {round1(ageMonths)} months · Sex: {baby.sex === "M" ? "Boy" : "Girl"}<br />
+            Gestational age at birth: {baby.gestationalAgeWeeks} weeks ({baby.preterm ? "preterm" : "term"})
+          </div>
+        </Card>
+        <Card style={{ marginBottom: 12 }}>
+          <SectionLabel>Growth</SectionLabel>
+          <table style={{ width: "100%", fontSize: 12.5, borderCollapse: "collapse" }}>
+            <tbody>
+              <tr><td style={{ padding: "4px 0" }}>Weight</td><td style={{ textAlign: "right" }}>{latest.weight} kg</td><td style={{ textAlign: "right" }}>{ordinal(latest.pWeight)} %ile</td></tr>
+              <tr><td style={{ padding: "4px 0" }}>Length</td><td style={{ textAlign: "right" }}>{latest.length} cm</td><td style={{ textAlign: "right" }}>{ordinal(latest.pLength)} %ile</td></tr>
+              <tr><td style={{ padding: "4px 0" }}>Head circumference</td><td style={{ textAlign: "right" }}>{latest.hc} cm</td><td style={{ textAlign: "right" }}>{ordinal(latest.pHc)} %ile</td></tr>
+              <tr><td style={{ padding: "4px 0" }}>BMI</td><td style={{ textAlign: "right" }}>{round1(latest.bmi)} kg/m²</td><td style={{ textAlign: "right" }}>{ordinal(latest.pBmi)} %ile</td></tr>
+            </tbody>
+          </table>
+          <div style={{ fontSize: 11.5, color: COLORS.inkSoft, marginTop: 8 }}>
+            Weight-for-age Z-score: {first.zWeight >= 0 ? "+" : ""}{round1(first.zWeight)} → {latest.zWeight >= 0 ? "+" : ""}{round1(latest.zWeight)} over {growthResults.length} recorded measurement{growthResults.length > 1 ? "s" : ""}.
+          </div>
+        </Card>
+        {avg && (
+          <Card style={{ marginBottom: 12 }}>
+            <SectionLabel>Nutrition (average over {mealsByDay.length} logged days)</SectionLabel>
+            <div style={{ fontSize: 12.5, lineHeight: 1.9 }}>
+              Estimated energy: {round0(avg.kcal)} kcal ({Math.round((avg.kcal / ref.kcal) * 100)}% of ICMR-NIN RDA)<br />
+              Protein: {round1(avg.protein)} g · Iron: {round1(avg.iron)} mg ({Math.round((avg.iron / ref.iron) * 100)}%) · Calcium: {round0(avg.calcium)} mg ({Math.round((avg.calcium / ref.calcium) * 100)}%)
+            </div>
+          </Card>
+        )}
+        <Card style={{ marginBottom: 12 }}>
+          <SectionLabel>Data quality</SectionLabel>
+          <div style={{ fontSize: 12.5, lineHeight: 1.9 }}>
+            Measurements logged: {growthResults.length} ({growthResults.filter((m) => m.confidence === "High").length} clinic/hospital, {growthResults.filter((m) => m.confidence === "Medium").length} parent/home)<br />
+            Meals logged: {totalMeals} across {mealsByDay.length} days. All nutrition figures are estimates, not measured intake.
+          </div>
+        </Card>
+        <Card accent={COLORS.primary} style={{ marginBottom: 12 }}>
+          <SectionLabel>Important observation</SectionLabel>
+          <div style={{ fontSize: 12.5, lineHeight: 1.6 }}>
+            {growthResults.length > 1 && Math.abs(weightDelta) > 0.6
+              ? `Weight-for-age Z-score decreased from ${round1(first.zWeight)} to ${round1(latest.zWeight)} over the recorded period, while length-for-age and head-circumference-for-age have stayed relatively stable.`
+              : "No large shift in weight-, length-, or head-circumference-for-age Z-scores was recorded over this period."}
+          </div>
+        </Card>
+        <div style={{ fontSize: 11, color: COLORS.inkFaint, lineHeight: 1.6, marginBottom: 20 }}>
+          Generated from parent-recorded measurements and meal logs. Not a diagnosis — intended to support, not replace, clinical assessment.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileScreen({ baby, growthResults, mealsByDay, ageMonths, viewMode, onViewModeChange }) {
+  const [reportOpen, setReportOpen] = useState(false);
+  const [showMethod, setShowMethod] = useState(false);
+  return (
+    <div className="bgn-fade-in" style={{ position: "relative", minHeight: "100%" }}>
+      <Card style={{ marginBottom: 14 }}>
+        <SectionLabel>Baby profile</SectionLabel>
+        <div style={{ fontSize: 13, lineHeight: 1.9 }}>
+          Name: <strong>{baby.name}</strong> · Sex: {baby.sex === "M" ? "Boy" : "Girl"}<br />
+          Gestational age at birth: {baby.gestationalAgeWeeks} weeks ({baby.preterm ? "Preterm" : "Term"})<br />
+          {baby.birthWeight && <>Birth weight / length / HC: {baby.birthWeight} kg / {baby.birthLength} cm / {baby.birthHc} cm</>}
+        </div>
+      </Card>
+
+      <Card style={{ marginBottom: 14 }}>
+        <SectionLabel>Who's viewing</SectionLabel>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[{ id: "parent", label: "Parent view", icon: Heart }, { id: "clinical", label: "Clinical view", icon: Stethoscope }].map((o) => (
+            <button key={o.id} onClick={() => onViewModeChange(o.id)} className="bgn-tap"
+              style={{ flex: 1, padding: "11px 0", borderRadius: 12, cursor: "pointer", fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                border: `1.5px solid ${viewMode === o.id ? COLORS.primary : COLORS.border}`, background: viewMode === o.id ? COLORS.primarySoft : "#fff", color: COLORS.ink }}>
+              <o.icon size={14} /> {o.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ fontSize: 11.5, color: COLORS.inkFaint, marginTop: 8, lineHeight: 1.5 }}>
+          Clinical view adds Z-scores, raw values and data-source tags for hospital staff. Parent view keeps the same data in plain language.
+        </div>
+      </Card>
+
+      <Card style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 12.5, color: COLORS.inkSoft, marginBottom: 10, lineHeight: 1.5 }}>
+          Generate a one-page summary of growth, nutrition and data quality to share with a pediatrician or dietitian.
+        </div>
+        <GhostButton icon={FileText} style={{ width: "100%" }} onClick={() => setReportOpen(true)}>Generate pediatrician report</GhostButton>
+      </Card>
+
+      <Card>
+        <button onClick={() => setShowMethod((s) => !s)} className="bgn-tap" style={{ width: "100%", background: "none", border: "none", display: "flex", justifyContent: "space-between", cursor: "pointer", padding: 0 }}>
+          <span style={{ fontWeight: 600, fontSize: 13.5 }}>Data sources &amp; methodology</span>
+          <ChevronDown size={17} style={{ transform: showMethod ? "rotate(180deg)" : "none" }} />
+        </button>
+        {showMethod && (
+          <div className="bgn-fade-in" style={{ fontSize: 12, color: COLORS.inkSoft, marginTop: 10, lineHeight: 1.7 }}>
+            <strong>Growth:</strong> WHO Child Growth Standards (2006) LMS reference tables, 0–24 months, official published parameters — weight-for-age, length-for-age, head-circumference-for-age, weight-for-length, and BMI-for-age. BMI is calculated automatically as weight ÷ height² from the same two measurements you already enter — no extra input needed.<br /><br />
+            <strong>Nutrition reference targets:</strong> ICMR–National Institute of Nutrition, "Nutrient Requirements for Indians: RDA &amp; EAR 2020." These are full daily RDAs; breast milk/formula typically covers part of the total, so under-100% coverage from food alone is expected.<br /><br />
+            <strong>Food composition:</strong> informed by ICMR-NIN's Indian Food Composition Tables (IFCT 2017) methodology for raw ingredients, converted to as-cooked values using standard cooking-yield factors. IFCT 2017 covers 528 raw commodities only — composite dishes (khichdi, idli, dosa, roti) are recipe-level estimates, not direct IFCT entries.<br /><br />
+            <strong>Licensing note:</strong> IFCT 2017 permits personal-use reproduction, but embedding its data in a product requires NIN's written permission. A production build of this app would need a proper data licence or API from NIN rather than these prototype figures.<br /><br />
+            <strong>Confidence &amp; source:</strong> every measurement and meal item is tagged with where it came from and a confidence level, visible in Clinical view.
+          </div>
+        )}
+      </Card>
+
+      {reportOpen && <ReportView baby={baby} growthResults={growthResults} mealsByDay={mealsByDay} ageMonths={ageMonths} onClose={() => setReportOpen(false)} />}
+    </div>
+  );
+}
+
+/* ============================================================================
+   NAVIGATION
+============================================================================ */
+const TABS = [
+  { id: "home", label: "Home", icon: Home },
+  { id: "growth", label: "Growth", icon: Activity },
+  { id: "nutrition", label: "Nutrition", icon: Utensils },
+  { id: "connect", label: "Connect", icon: TrendingUp },
+  { id: "timeline", label: "Timeline", icon: History },
+  { id: "profile", label: "Profile", icon: User },
+];
+function BottomNav({ active, onChange }) {
+  return (
+    <div style={{ display: "flex", borderTop: `1px solid ${COLORS.border}`, background: COLORS.paperRaised, padding: "6px 2px 8px" }}>
+      {TABS.map((t) => {
+        const Icon = t.icon;
+        const isActive = active === t.id;
+        return (
+          <button key={t.id} onClick={() => onChange(t.id)} className="bgn-tap"
+            style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "6px 0" }}>
+            <Icon size={19} color={isActive ? COLORS.primary : COLORS.inkFaint} strokeWidth={isActive ? 2.4 : 2} />
+            <span style={{ fontSize: 9.5, fontWeight: isActive ? 700 : 500, color: isActive ? COLORS.primary : COLORS.inkFaint }}>{t.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ============================================================================
+   ROOT APP — state machine: welcome → onboarding (profile → measurement →
+   result) → main app. "See a demo" skips straight to main with seed data.
+============================================================================ */
+function App() {
+  const [stage, setStage] = useState("welcome"); // welcome | profile | measurement | result | main
+  const [tab, setTab] = useState("home");
+  const [viewMode, setViewMode] = useState("parent");
+  const [baby, setBaby] = useState(null);
+  const [measurements, setMeasurements] = useState([]);
+  const [mealsByDay, setMealsByDay] = useState([]);
+  const [pendingProfile, setPendingProfile] = useState(null);
+  const [pendingResult, setPendingResult] = useState(null);
+  const [addMeasurementOpen, setAddMeasurementOpen] = useState(false);
+
+  const todayOffset = 0;
+
+  function startOnboarding() { setStage("profile"); }
+  function loadDemo() {
+    setBaby(DEMO_BABY);
+    setMeasurements(DEMO_MEASUREMENTS);
+    setMealsByDay(DEMO_MEAL_LOG_RAW.map((d) => ({ offset: d.offset, meals: d.meals.map((m) => ({ ...m, items: m.items.map(enrichItem) })) })));
+    setStage("main"); setTab("home");
+  }
+  function handleProfileNext(profile) { setPendingProfile(profile); setStage("measurement"); }
+  function handleMeasurementSubmit(m) {
+    const ageMonths = ageInMonths(pendingProfile.dob, m.date);
+    const correctedMonths = correctedAgeMonths(ageMonths, pendingProfile.gestationalAgeWeeks, pendingProfile.preterm);
+    const growth = computeGrowth(pendingProfile.sex, correctedMonths, m.weight, m.length, m.hc);
+    setPendingResult({ m, ageMonths, correctedMonths, growth });
+    setStage("result");
+  }
+  function handleResultContinue() {
+    const finalBaby = { ...pendingProfile };
+    setBaby(finalBaby);
+    setMeasurements([{
+      ageMonths: round1(pendingResult.ageMonths), label: `${round1(pendingResult.ageMonths)} months`,
+      weight: pendingResult.m.weight, length: pendingResult.m.length, hc: pendingResult.m.hc,
+      source: "Parent entered", confidence: "Medium",
+    }]);
+    setMealsByDay([{ offset: 0, meals: [] }]);
+    setStage("main"); setTab("home");
+  }
+  function handleAddMeasurementSave(newMeasurement) {
+    setMeasurements((prev) => [...prev, newMeasurement].sort((a, b) => a.ageMonths - b.ageMonths));
+    setAddMeasurementOpen(false);
+  }
+  function handleAddMeal(meal) {
+    setMealsByDay((prev) => {
+      const exists = prev.some((d) => d.offset === todayOffset);
+      const withItems = { ...meal, items: meal.items.map(enrichItem) };
+      if (!exists) return [...prev, { offset: todayOffset, meals: [withItems] }];
+      return prev.map((d) => (d.offset === todayOffset ? { ...d, meals: [...d.meals, withItems] } : d));
+    });
+  }
+
+  const growthResults = useMemo(() => {
+    if (!baby) return [];
+    return measurements.map((m) => {
+      const g = computeGrowth(baby.sex, m.ageMonths, m.weight, m.length, m.hc);
+      return { ...m, ...g };
+    });
+  }, [measurements, baby]);
+
+  const currentAgeMonths = baby ? ageInMonths(baby.dob, todayISO()) : 0;
+
+  const shellStyle = { width: "100%", maxWidth: 430, background: COLORS.paper, borderRadius: 22, overflow: "hidden", boxShadow: "0 8px 30px rgba(35,42,34,0.18)", display: "flex", flexDirection: "column", height: "min(860px, 92vh)", position: "relative" };
+
+  if (stage === "welcome" || stage === "profile" || stage === "measurement" || stage === "result") {
+    return (
+      <div className="bgn-root" style={{ minHeight: "100vh", background: "#E8E3D6", display: "flex", justifyContent: "center", padding: "16px 0" }}>
+        <style>{GLOBAL_CSS}</style>
+        <div style={shellStyle}>
+          <div className="bgn-scroll" style={{ flex: 1, overflowY: "auto", padding: 22 }}>
+            {stage === "welcome" && <WelcomeScreen onStart={startOnboarding} onDemo={loadDemo} />}
+            {stage === "profile" && <ProfileFormScreen onNext={handleProfileNext} onBack={() => setStage("welcome")} />}
+            {stage === "measurement" && <MeasurementFormScreen baby={pendingProfile} onSubmit={handleMeasurementSubmit} onBack={() => setStage("profile")} />}
+            {stage === "result" && pendingResult && (
+              <ResultScreen baby={pendingProfile} measurement={pendingResult.m} growth={pendingResult.growth}
+                ageMonths={pendingResult.ageMonths} correctedMonths={pendingResult.correctedMonths} onContinue={handleResultContinue} />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const screens = {
+    home: <HomeScreen baby={baby} growthResults={growthResults} mealsByDay={mealsByDay} todayOffset={todayOffset} ageMonths={currentAgeMonths} viewMode={viewMode} onNavigate={setTab} />,
+    growth: <GrowthScreen baby={baby} growthResults={growthResults} viewMode={viewMode} onAddMeasurement={() => setAddMeasurementOpen(true)} />,
+    nutrition: <NutritionScreen ageMonths={currentAgeMonths} mealsByDay={mealsByDay} onAddMeal={handleAddMeal} todayOffset={todayOffset} viewMode={viewMode} />,
+    connect: <ConnectScreen growthResults={growthResults} mealsByDay={mealsByDay} ageMonths={currentAgeMonths} />,
+    timeline: <TimelineScreen growthResults={growthResults} mealsByDay={mealsByDay} ageMonths={currentAgeMonths} viewMode={viewMode} />,
+    profile: <ProfileScreen baby={baby} growthResults={growthResults} mealsByDay={mealsByDay} ageMonths={currentAgeMonths} viewMode={viewMode} onViewModeChange={setViewMode} />,
+  };
+
+  return (
+    <div className="bgn-root" style={{ minHeight: "100vh", background: "#E8E3D6", display: "flex", justifyContent: "center", padding: "16px 0" }}>
+      <style>{GLOBAL_CSS}</style>
+      <div style={shellStyle}>
+        <div style={{ padding: "14px 18px 10px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${COLORS.border}` }}>
+          <div>
+            <div className="bgn-serif" style={{ fontSize: 15, fontWeight: 600 }}>{baby.name}'s overview</div>
+            <div style={{ fontSize: 11, color: COLORS.inkFaint }}>{round1(currentAgeMonths)} months</div>
+          </div>
+          <button onClick={() => setViewMode((v) => (v === "parent" ? "clinical" : "parent"))} className="bgn-tap"
+            style={{ display: "flex", alignItems: "center", gap: 5, background: COLORS.primarySoft, border: "none", borderRadius: 999, padding: "6px 12px", cursor: "pointer" }}>
+            {viewMode === "parent" ? <Heart size={12} color={COLORS.primaryDeep} /> : <Stethoscope size={12} color={COLORS.primaryDeep} />}
+            <span style={{ fontSize: 11, fontWeight: 600, color: COLORS.primaryDeep }}>{viewMode === "parent" ? "Parent view" : "Clinical view"}</span>
+          </button>
+        </div>
+        <div className="bgn-scroll" style={{ flex: 1, overflowY: "auto", padding: 16, position: "relative" }}>
+          {screens[tab]}
+        </div>
+        <BottomNav active={tab} onChange={setTab} />
+        {addMeasurementOpen && <AddMeasurementFlow baby={baby} onClose={() => setAddMeasurementOpen(false)} onSave={handleAddMeasurementSave} />}
+      </div>
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+
+<script>
+(function () {
+  // Defensive check: if a CDN script failed to load (network issue, ad-blocker,
+  // restrictive CSP, etc.) show a clear message instead of a cryptic console error.
+  var missing = [];
+  if (typeof React === "undefined") missing.push("React");
+  if (typeof ReactDOM === "undefined") missing.push("ReactDOM");
+  if (typeof Recharts === "undefined") missing.push("Recharts");
+  if (typeof Babel === "undefined") missing.push("Babel");
+  if (missing.length) {
+    document.getElementById("root").innerHTML =
+      '<div style="max-width:420px;margin:60px auto;padding:20px;font-family:system-ui,sans-serif;' +
+      'color:#5C3E10;background:#F8E8D2;border-radius:12px;line-height:1.6;">' +
+      '<strong>Couldn\u2019t load a required library: ' + missing.join(", ") + '.</strong><br/><br/>' +
+      "This usually means a CDN script was blocked (ad-blocker, offline, or a restrictive " +
+      "network/proxy). Try reloading, checking your connection, or opening this file in a " +
+      "different browser/network.</div>";
+    return;
+  }
+  var source = document.getElementById("app-source").textContent;
+  // Classic runtime: emits React.createElement(...) calls, which work with the
+  // global `React` from the UMD build above -- no ES module resolver needed.
+  var output = Babel.transform(source, { presets: [["react", { runtime: "classic" }]] }).code;
+  var script = document.createElement("script");
+  script.textContent = output;
+  document.body.appendChild(script);
+})();
+</script>
+</body>
+</html>
