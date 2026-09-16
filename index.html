@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>Baby Growth &amp; Nutrition Intelligence Platform</title>
-<meta name="description" content="Prototype: WHO growth tracking connected to nutrition intake, for parents and hospital staff." />
+<meta name="description" content="Prototype: WHO growth tracking connected to nutrition intake, for hospital staff and parents." />
 
 <!-- React 18 (served from cdnjs -- more broadly whitelisted by corporate
      networks/CSPs than unpkg.com, which some environments block outright) -->
@@ -463,6 +463,42 @@ const DEMO_MEAL_LOG_RAW = [
 function enrichItem(it) { return { ...it, source: it.source || "Parent entered", confidence: it.confidence || "Medium" }; }
 
 /* ============================================================================
+   MULTI-PATIENT STORAGE
+   Hospital staff can see every registered patient; a parent's device is
+   linked to exactly one. This is a prototype-level persistence layer using
+   the browser's own localStorage -- it keeps data on THIS device/browser
+   only. It is NOT a shared hospital database: a patient registered on one
+   computer will not appear on another. A real deployment would need a
+   backend with proper authentication before this could be used across
+   multiple devices or trusted for real records.
+============================================================================ */
+const STORAGE_KEY = "bgn_patients_v1";
+const ROLE_KEY = "bgn_role_v1";
+const MY_PATIENT_KEY = "bgn_my_patient_id_v1";
+function loadPatients() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+function savePatients(patients) {
+  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(patients)); } catch (e) { /* storage unavailable — continue in-memory only */ }
+}
+function getStoredRole() { try { return window.localStorage.getItem(ROLE_KEY); } catch (e) { return null; } }
+function setStoredRole(r) { try { window.localStorage.setItem(ROLE_KEY, r); } catch (e) {} }
+function clearStoredRole() { try { window.localStorage.removeItem(ROLE_KEY); window.localStorage.removeItem(MY_PATIENT_KEY); } catch (e) {} }
+function getMyPatientId() { try { return window.localStorage.getItem(MY_PATIENT_KEY); } catch (e) { return null; } }
+function setMyPatientId(id) { try { window.localStorage.setItem(MY_PATIENT_KEY, id); } catch (e) {} }
+function newPatientId() { return "pt_" + Math.random().toString(36).slice(2, 10); }
+function generatePatientCode(existingCodes) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O, 1/I
+  let code;
+  do { code = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join(""); }
+  while (existingCodes.includes(code));
+  return code;
+}
+
+/* ============================================================================
    SMALL UI ATOMS — fewer variants, used sparingly, so a badge or a tint
    always means something rather than decorating every card.
 ============================================================================ */
@@ -532,25 +568,116 @@ function TextField({ label, ...props }) {
    ONBOARDING — from scratch: name, sex, DOB, then today's measurement, with
    the WHO deviation (Z-score/percentile) computed and shown immediately.
 ============================================================================ */
-function WelcomeScreen({ onStart, onDemo }) {
+
+/* ============================================================================
+   ROLE, ROSTER, AND LINKING — hospital staff see every registered patient;
+   a parent's device is locked to the one child they've linked or registered.
+============================================================================ */
+function RoleScreen({ onChoose }) {
   return (
     <div className="bgn-fade-in" style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", padding: "10px 4px" }}>
-      <div style={{ textAlign: "center", marginBottom: 36 }}>
+      <div style={{ textAlign: "center", marginBottom: 30 }}>
         <div style={{ width: 56, height: 56, borderRadius: 16, background: COLORS.primarySoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
           <Baby size={28} color={COLORS.primaryDeep} />
         </div>
         <div className="bgn-serif" style={{ fontSize: 22, fontWeight: 600, marginBottom: 8 }}>Growth &amp; Nutrition</div>
-        <div style={{ fontSize: 14, color: COLORS.inkSoft, lineHeight: 1.6, maxWidth: 300, margin: "0 auto" }}>
-          Track growth against WHO standards and see how it connects to what your baby actually eats.
+        <div style={{ fontSize: 14, color: COLORS.inkSoft }}>Who's using this?</div>
+      </div>
+      <button onClick={() => onChoose("staff")} className="bgn-tap"
+        style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px", borderRadius: 14, marginBottom: 12, cursor: "pointer",
+          border: `1.5px solid ${COLORS.border}`, background: "#fff", textAlign: "left" }}>
+        <Stethoscope size={22} color={COLORS.primary} />
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>Hospital staff</div>
+          <div style={{ fontSize: 12, color: COLORS.inkSoft }}>View and manage all registered patients</div>
+        </div>
+      </button>
+      <button onClick={() => onChoose("parent")} className="bgn-tap"
+        style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px", borderRadius: 14, cursor: "pointer",
+          border: `1.5px solid ${COLORS.border}`, background: "#fff", textAlign: "left" }}>
+        <Heart size={22} color={COLORS.accent} />
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>Parent / caregiver</div>
+          <div style={{ fontSize: 12, color: COLORS.inkSoft }}>Follow your own child's growth &amp; nutrition</div>
+        </div>
+      </button>
+      <div style={{ fontSize: 10.5, color: COLORS.inkFaint, textAlign: "center", marginTop: 22, lineHeight: 1.6 }}>
+        Prototype note: records are stored on this device/browser only — not a shared hospital database.
+      </div>
+    </div>
+  );
+}
+
+function PatientRosterRow({ patient, onClick }) {
+  const latest = patient.measurements[patient.measurements.length - 1];
+  const first = patient.measurements[0];
+  const g = computeGrowth(patient.baby.sex, latest.ageMonths, latest.weight, latest.length, latest.hc);
+  const gFirst = computeGrowth(patient.baby.sex, first.ageMonths, first.weight, first.length, first.hc);
+  const flagged = patient.measurements.length > 1 && (gFirst.zWeight - g.zWeight) > 0.6;
+  return (
+    <Card onClick={onClick} style={{ marginBottom: 10, cursor: "pointer" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 14 }}>{patient.baby.name}</div>
+          <div style={{ fontSize: 11, color: COLORS.inkFaint, marginTop: 2 }}>{patient.baby.sex === "M" ? "Boy" : "Girl"} · {latest.label} · ID {patient.code}</div>
+        </div>
+        <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 8 }}>
+          {flagged && <AlertCircle size={14} color={COLORS.attention} />}
+          <div>
+            <div className="bgn-serif" style={{ fontSize: 16, fontWeight: 600 }}>{ordinal(g.pWeight)}</div>
+            <div style={{ fontSize: 10, color: COLORS.inkFaint }}>weight %ile</div>
+          </div>
+          <ChevronRight size={16} color={COLORS.inkFaint} />
         </div>
       </div>
-      <PrimaryButton onClick={onStart} icon={Plus} style={{ marginBottom: 10 }}>Add your baby</PrimaryButton>
-      <button onClick={onDemo} className="bgn-tap" style={{ background: "none", border: "none", color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, padding: 12, cursor: "pointer" }}>
+    </Card>
+  );
+}
+
+function StaffRoster({ patients, onSelectPatient, onRegister, onViewDemo, onSwitchRole }) {
+  return (
+    <div className="bgn-fade-in">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+        <div>
+          <div className="bgn-serif" style={{ fontSize: 19, fontWeight: 600 }}>Patients</div>
+          <div style={{ fontSize: 12, color: COLORS.inkSoft }}>{patients.length} registered on this device</div>
+        </div>
+        <button onClick={onSwitchRole} className="bgn-tap" style={{ background: "none", border: "none", color: COLORS.inkFaint, fontSize: 11.5, cursor: "pointer", padding: 0 }}>Switch role</button>
+      </div>
+      <PrimaryButton icon={Plus} onClick={onRegister} style={{ marginBottom: 16 }}>Register new patient</PrimaryButton>
+      {patients.length === 0 ? (
+        <Card style={{ textAlign: "center", padding: "28px 16px" }}>
+          <div style={{ fontSize: 13, color: COLORS.inkSoft, marginBottom: 4 }}>No patients registered yet</div>
+          <div style={{ fontSize: 12, color: COLORS.inkFaint }}>Register the first one above, or explore a demo patient below.</div>
+        </Card>
+      ) : (
+        patients.slice().reverse().map((p) => <PatientRosterRow key={p.id} patient={p} onClick={() => onSelectPatient(p.id)} />)
+      )}
+      <GhostButton onClick={onViewDemo} style={{ width: "100%", marginTop: 6 }}>See a demo patient</GhostButton>
+    </div>
+  );
+}
+
+function ParentLinkScreen({ code, setCode, error, onLink, onRegisterSelf, onViewDemo, onSwitchRole }) {
+  return (
+    <div className="bgn-fade-in">
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6 }}>
+        <button onClick={onSwitchRole} className="bgn-tap" style={{ background: "none", border: "none", color: COLORS.inkFaint, fontSize: 11.5, cursor: "pointer", padding: 0 }}>Switch role</button>
+      </div>
+      <div className="bgn-serif" style={{ fontSize: 19, fontWeight: 600, marginBottom: 4 }}>Find your child's record</div>
+      <div style={{ fontSize: 13, color: COLORS.inkSoft, marginBottom: 22, lineHeight: 1.5 }}>Ask your hospital or clinic for your child's Patient ID.</div>
+      <TextField label="Patient ID" placeholder="e.g. AB12CD" value={code} onChange={(e) => setCode(e.target.value)} />
+      {error && <div style={{ fontSize: 12, color: COLORS.attention, marginTop: -10, marginBottom: 14, lineHeight: 1.5 }}>{error}</div>}
+      <PrimaryButton disabled={!code.trim()} onClick={onLink} style={{ marginBottom: 18 }}>Link to my child</PrimaryButton>
+      <div style={{ textAlign: "center", fontSize: 11.5, color: COLORS.inkFaint, margin: "4px 0 18px" }}>— or —</div>
+      <GhostButton onClick={onRegisterSelf} style={{ width: "100%", marginBottom: 10 }}>Register my baby myself</GhostButton>
+      <button onClick={onViewDemo} className="bgn-tap" style={{ background: "none", border: "none", color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, padding: 12, cursor: "pointer", display: "block", margin: "0 auto" }}>
         See a demo first
       </button>
     </div>
   );
 }
+
 
 function ProfileFormScreen({ onNext, onBack }) {
   const [name, setName] = useState("");
@@ -645,7 +772,7 @@ function MeasurementFormScreen({ baby, onSubmit, onBack, title = "Today's measur
   );
 }
 
-function ResultScreen({ baby, measurement, growth, ageMonths, correctedMonths, onContinue, continueLabel = "Continue to dashboard" }) {
+function ResultScreen({ baby, measurement, growth, ageMonths, correctedMonths, onContinue, continueLabel = "Continue to dashboard", patientCode }) {
   const rows = [
     { label: "Weight", value: `${measurement.weight} kg`, p: growth.pWeight, z: growth.zWeight },
     { label: "Length", value: `${measurement.length} cm`, p: growth.pLength, z: growth.zLength },
@@ -661,6 +788,13 @@ function ResultScreen({ baby, measurement, growth, ageMonths, correctedMonths, o
           {baby.name}'s deviation from the WHO standard
         </div>
       </div>
+      {patientCode && (
+        <Card accent={COLORS.accent} style={{ marginBottom: 14, textAlign: "center" }}>
+          <div style={{ fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600, marginBottom: 4 }}>Patient ID — share with the family</div>
+          <div className="bgn-serif" style={{ fontSize: 24, fontWeight: 700, letterSpacing: 2 }}>{patientCode}</div>
+          <div style={{ fontSize: 11, color: COLORS.inkFaint, marginTop: 4 }}>Parents enter this code at home to follow {baby.name}'s progress.</div>
+        </Card>
+      )}
       {rows.map((r) => (
         <Card key={r.label} style={{ marginBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1484,7 +1618,7 @@ function ReportView({ baby, growthResults, mealsByDay, ageMonths, onClose }) {
   );
 }
 
-function ProfileScreen({ baby, growthResults, mealsByDay, ageMonths, viewMode, onViewModeChange }) {
+function ProfileScreen({ baby, growthResults, mealsByDay, ageMonths, viewMode, onViewModeChange, patientCode, role, onUnlink }) {
   const [reportOpen, setReportOpen] = useState(false);
   const [showMethod, setShowMethod] = useState(false);
   return (
@@ -1494,7 +1628,8 @@ function ProfileScreen({ baby, growthResults, mealsByDay, ageMonths, viewMode, o
         <div style={{ fontSize: 13, lineHeight: 1.9 }}>
           Name: <strong>{baby.name}</strong> · Sex: {baby.sex === "M" ? "Boy" : "Girl"}<br />
           Gestational age at birth: {baby.gestationalAgeWeeks} weeks ({baby.preterm ? "Preterm" : "Term"})<br />
-          {baby.birthWeight && <>Birth weight / length / HC: {baby.birthWeight} kg / {baby.birthLength} cm / {baby.birthHc} cm</>}
+          {baby.birthWeight && <>Birth weight / length / HC: {baby.birthWeight} kg / {baby.birthLength} cm / {baby.birthHc} cm<br /></>}
+          {patientCode && <>Patient ID: <strong>{patientCode}</strong></>}
         </div>
       </Card>
 
@@ -1537,6 +1672,15 @@ function ProfileScreen({ baby, growthResults, mealsByDay, ageMonths, viewMode, o
         )}
       </Card>
 
+      {role === "parent" && (
+        <Card style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 10, lineHeight: 1.5 }}>
+            Linked the wrong child, or want to start over on this device?
+          </div>
+          <GhostButton onClick={onUnlink} style={{ width: "100%" }}>Unlink this child</GhostButton>
+        </Card>
+      )}
+
       {reportOpen && <ReportView baby={baby} growthResults={growthResults} mealsByDay={mealsByDay} ageMonths={ageMonths} onClose={() => setReportOpen(false)} />}
     </div>
   );
@@ -1576,56 +1720,142 @@ function BottomNav({ active, onChange }) {
    result) → main app. "See a demo" skips straight to main with seed data.
 ============================================================================ */
 function App() {
-  const [stage, setStage] = useState("welcome"); // welcome | profile | measurement | result | main
+  const [role, setRole] = useState(() => getStoredRole());
+  const [patients, setPatients] = useState(() => loadPatients());
+  const [stage, setStage] = useState(() => {
+    const r = getStoredRole();
+    if (r === "staff") return "staff-roster";
+    if (r === "parent") {
+      const myId = getMyPatientId();
+      const found = myId && loadPatients().some((p) => p.id === myId);
+      return found ? "dashboard" : "parent-link";
+    }
+    return "role";
+  });
+  const [activePatientId, setActivePatientId] = useState(() => {
+    if (getStoredRole() === "parent") return getMyPatientId();
+    return null;
+  });
+  const [demoActive, setDemoActive] = useState(false);
+  const [demoMeasurements, setDemoMeasurements] = useState(DEMO_MEASUREMENTS);
+  const [demoMeals, setDemoMeals] = useState(() =>
+    DEMO_MEAL_LOG_RAW.map((d) => ({ offset: d.offset, meals: d.meals.map((m) => ({ ...m, items: m.items.map(enrichItem) })) }))
+  );
+
   const [tab, setTab] = useState("home");
   const [viewMode, setViewMode] = useState("parent");
-  const [baby, setBaby] = useState(null);
-  const [measurements, setMeasurements] = useState([]);
-  const [mealsByDay, setMealsByDay] = useState([]);
   const [pendingProfile, setPendingProfile] = useState(null);
   const [pendingResult, setPendingResult] = useState(null);
+  const [onboardContext, setOnboardContext] = useState(null); // "staff" | "parent"
+  const [linkCode, setLinkCode] = useState("");
+  const [linkError, setLinkError] = useState("");
   const [addMeasurementOpen, setAddMeasurementOpen] = useState(false);
 
   const todayOffset = 0;
 
-  function startOnboarding() { setStage("profile"); }
-  function loadDemo() {
-    setBaby(DEMO_BABY);
-    setMeasurements(DEMO_MEASUREMENTS);
-    setMealsByDay(DEMO_MEAL_LOG_RAW.map((d) => ({ offset: d.offset, meals: d.meals.map((m) => ({ ...m, items: m.items.map(enrichItem) })) })));
-    setStage("main"); setTab("home");
+  function persistPatients(next) { setPatients(next); savePatients(next); }
+
+  function chooseRole(r) {
+    setStoredRole(r);
+    setRole(r);
+    if (r === "staff") { setStage("staff-roster"); return; }
+    const myId = getMyPatientId();
+    if (myId && patients.some((p) => p.id === myId)) {
+      setActivePatientId(myId); setDemoActive(false); setViewMode("parent"); setTab("home"); setStage("dashboard");
+    } else {
+      setStage("parent-link");
+    }
   }
-  function handleProfileNext(profile) { setPendingProfile(profile); setStage("measurement"); }
+  function switchRole() {
+    clearStoredRole();
+    setRole(null); setActivePatientId(null); setDemoActive(false); setStage("role");
+  }
+
+  function startOnboarding(context) { setOnboardContext(context); setStage("onboard-profile"); }
+  function loadDemo() { setDemoActive(true); setActivePatientId(null); setViewMode(role === "staff" ? "clinical" : "parent"); setTab("home"); setStage("dashboard"); }
+  function exitDemo() { setDemoActive(false); setStage(role === "staff" ? "staff-roster" : "parent-link"); }
+
+  function handleLinkSubmit() {
+    const code = linkCode.trim().toUpperCase();
+    const found = patients.find((p) => p.code === code);
+    if (!found) { setLinkError("No patient found with that ID. Check with your hospital, or register below."); return; }
+    setMyPatientId(found.id);
+    setActivePatientId(found.id); setDemoActive(false); setViewMode("parent"); setTab("home");
+    setLinkError(""); setStage("dashboard");
+  }
+
+  function handleProfileNext(profile) { setPendingProfile(profile); setStage("onboard-measurement"); }
   function handleMeasurementSubmit(m) {
     const ageMonths = ageInMonths(pendingProfile.dob, m.date);
     const correctedMonths = correctedAgeMonths(ageMonths, pendingProfile.gestationalAgeWeeks, pendingProfile.preterm);
     const growth = computeGrowth(pendingProfile.sex, correctedMonths, m.weight, m.length, m.hc);
-    setPendingResult({ m, ageMonths, correctedMonths, growth });
-    setStage("result");
+    const patientCode = onboardContext === "staff" ? generatePatientCode(patients.map((p) => p.code)) : null;
+    setPendingResult({ m, ageMonths, correctedMonths, growth, patientCode });
+    setStage("onboard-result");
   }
   function handleResultContinue() {
-    const finalBaby = { ...pendingProfile };
-    setBaby(finalBaby);
-    setMeasurements([{
-      ageMonths: round1(pendingResult.ageMonths), label: `${round1(pendingResult.ageMonths)} months`,
-      weight: pendingResult.m.weight, length: pendingResult.m.length, hc: pendingResult.m.hc,
-      source: "Parent entered", confidence: "Medium",
-    }]);
-    setMealsByDay([{ offset: 0, meals: [] }]);
-    setStage("main"); setTab("home");
+    const id = newPatientId();
+    const code = pendingResult.patientCode || generatePatientCode(patients.map((p) => p.code));
+    const newPatient = {
+      id, code, baby: { ...pendingProfile },
+      measurements: [{
+        ageMonths: round1(pendingResult.ageMonths), label: `${round1(pendingResult.ageMonths)} months`,
+        weight: pendingResult.m.weight, length: pendingResult.m.length, hc: pendingResult.m.hc,
+        source: onboardContext === "staff" ? "Clinic visit" : "Parent entered",
+        confidence: onboardContext === "staff" ? "High" : "Medium",
+      }],
+      mealsByDay: [{ offset: 0, meals: [] }],
+      registeredBy: onboardContext,
+    };
+    persistPatients([...patients, newPatient]);
+    setActivePatientId(id); setDemoActive(false);
+    if (onboardContext === "parent") { setMyPatientId(id); setViewMode("parent"); }
+    else { setViewMode("clinical"); }
+    setTab("home"); setStage("dashboard");
   }
+
   function handleAddMeasurementSave(newMeasurement) {
-    setMeasurements((prev) => [...prev, newMeasurement].sort((a, b) => a.ageMonths - b.ageMonths));
+    if (demoActive) {
+      setDemoMeasurements((prev) => [...prev, newMeasurement].sort((a, b) => a.ageMonths - b.ageMonths));
+    } else {
+      const next = patients.map((p) => (p.id === activePatientId
+        ? { ...p, measurements: [...p.measurements, newMeasurement].sort((a, b) => a.ageMonths - b.ageMonths) }
+        : p));
+      persistPatients(next);
+    }
     setAddMeasurementOpen(false);
   }
   function handleAddMeal(meal) {
-    setMealsByDay((prev) => {
-      const exists = prev.some((d) => d.offset === todayOffset);
-      const withItems = { ...meal, items: meal.items.map(enrichItem) };
-      if (!exists) return [...prev, { offset: todayOffset, meals: [withItems] }];
-      return prev.map((d) => (d.offset === todayOffset ? { ...d, meals: [...d.meals, withItems] } : d));
-    });
+    const withItems = { ...meal, items: meal.items.map(enrichItem) };
+    if (demoActive) {
+      setDemoMeals((prev) => {
+        const exists = prev.some((d) => d.offset === todayOffset);
+        if (!exists) return [...prev, { offset: todayOffset, meals: [withItems] }];
+        return prev.map((d) => (d.offset === todayOffset ? { ...d, meals: [...d.meals, withItems] } : d));
+      });
+    } else {
+      const next = patients.map((p) => {
+        if (p.id !== activePatientId) return p;
+        const exists = p.mealsByDay.some((d) => d.offset === todayOffset);
+        const mealsByDay = exists
+          ? p.mealsByDay.map((d) => (d.offset === todayOffset ? { ...d, meals: [...d.meals, withItems] } : d))
+          : [...p.mealsByDay, { offset: todayOffset, meals: [withItems] }];
+        return { ...p, mealsByDay };
+      });
+      persistPatients(next);
+    }
   }
+  function handleUnlink() {
+    clearStoredRole();
+    setStoredRole("parent"); setRole("parent");
+    setActivePatientId(null); setStage("parent-link");
+  }
+
+  const activePatient = demoActive ? { baby: DEMO_BABY } : patients.find((p) => p.id === activePatientId);
+  const baby = demoActive ? DEMO_BABY : activePatient?.baby;
+  const measurements = demoActive ? demoMeasurements : (activePatient?.measurements || []);
+  const mealsByDay = demoActive ? demoMeals : (activePatient?.mealsByDay || []);
+  const patientCode = demoActive ? "DEMO01" : activePatient?.code;
 
   const growthResults = useMemo(() => {
     if (!baby) return [];
@@ -1639,18 +1869,29 @@ function App() {
 
   const shellStyle = { width: "100%", maxWidth: 430, background: COLORS.paper, borderRadius: 22, overflow: "hidden", boxShadow: "0 8px 30px rgba(35,42,34,0.18)", display: "flex", flexDirection: "column", height: "min(860px, 92vh)", position: "relative" };
 
-  if (stage === "welcome" || stage === "profile" || stage === "measurement" || stage === "result") {
+  const preDashboardStages = ["role", "staff-roster", "parent-link", "onboard-profile", "onboard-measurement", "onboard-result"];
+  if (preDashboardStages.includes(stage)) {
     return (
       <div className="bgn-root" style={{ minHeight: "100vh", background: "#E8E3D6", display: "flex", justifyContent: "center", padding: "16px 0" }}>
         <style>{GLOBAL_CSS}</style>
         <div style={shellStyle}>
           <div className="bgn-scroll" style={{ flex: 1, overflowY: "auto", padding: 22 }}>
-            {stage === "welcome" && <WelcomeScreen onStart={startOnboarding} onDemo={loadDemo} />}
-            {stage === "profile" && <ProfileFormScreen onNext={handleProfileNext} onBack={() => setStage("welcome")} />}
-            {stage === "measurement" && <MeasurementFormScreen baby={pendingProfile} onSubmit={handleMeasurementSubmit} onBack={() => setStage("profile")} />}
-            {stage === "result" && pendingResult && (
+            {stage === "role" && <RoleScreen onChoose={chooseRole} />}
+            {stage === "staff-roster" && (
+              <StaffRoster patients={patients} onSelectPatient={(id) => { setActivePatientId(id); setDemoActive(false); setViewMode("clinical"); setTab("home"); setStage("dashboard"); }}
+                onRegister={() => startOnboarding("staff")} onViewDemo={loadDemo} onSwitchRole={switchRole} />
+            )}
+            {stage === "parent-link" && (
+              <ParentLinkScreen code={linkCode} setCode={setLinkCode} error={linkError} onLink={handleLinkSubmit}
+                onRegisterSelf={() => startOnboarding("parent")} onViewDemo={loadDemo} onSwitchRole={switchRole} />
+            )}
+            {stage === "onboard-profile" && <ProfileFormScreen onNext={handleProfileNext} onBack={() => setStage(onboardContext === "staff" ? "staff-roster" : "parent-link")} />}
+            {stage === "onboard-measurement" && <MeasurementFormScreen baby={pendingProfile} onSubmit={handleMeasurementSubmit} onBack={() => setStage("onboard-profile")} />}
+            {stage === "onboard-result" && pendingResult && (
               <ResultScreen baby={pendingProfile} measurement={pendingResult.m} growth={pendingResult.growth}
-                ageMonths={pendingResult.ageMonths} correctedMonths={pendingResult.correctedMonths} onContinue={handleResultContinue} />
+                ageMonths={pendingResult.ageMonths} correctedMonths={pendingResult.correctedMonths} onContinue={handleResultContinue}
+                continueLabel={onboardContext === "staff" ? "View patient dashboard" : "Continue to dashboard"}
+                patientCode={pendingResult.patientCode} />
             )}
           </div>
         </div>
@@ -1664,7 +1905,8 @@ function App() {
     nutrition: <NutritionScreen ageMonths={currentAgeMonths} mealsByDay={mealsByDay} onAddMeal={handleAddMeal} todayOffset={todayOffset} viewMode={viewMode} />,
     connect: <ConnectScreen growthResults={growthResults} mealsByDay={mealsByDay} ageMonths={currentAgeMonths} />,
     timeline: <TimelineScreen growthResults={growthResults} mealsByDay={mealsByDay} ageMonths={currentAgeMonths} viewMode={viewMode} />,
-    profile: <ProfileScreen baby={baby} growthResults={growthResults} mealsByDay={mealsByDay} ageMonths={currentAgeMonths} viewMode={viewMode} onViewModeChange={setViewMode} />,
+    profile: <ProfileScreen baby={baby} growthResults={growthResults} mealsByDay={mealsByDay} ageMonths={currentAgeMonths} viewMode={viewMode}
+      onViewModeChange={setViewMode} patientCode={demoActive ? undefined : patientCode} role={role} onUnlink={handleUnlink} />,
   };
 
   return (
@@ -1672,9 +1914,17 @@ function App() {
       <style>{GLOBAL_CSS}</style>
       <div style={shellStyle}>
         <div style={{ padding: "14px 18px 10px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${COLORS.border}` }}>
-          <div>
-            <div className="bgn-serif" style={{ fontSize: 15, fontWeight: 600 }}>{baby.name}'s overview</div>
-            <div style={{ fontSize: 11, color: COLORS.inkFaint }}>{round1(currentAgeMonths)} months</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {(role === "staff" && !demoActive) || demoActive ? (
+              <button onClick={demoActive ? exitDemo : () => setStage("staff-roster")} className="bgn-tap"
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 4, marginLeft: -4 }}>
+                <ArrowLeft size={17} color={COLORS.inkSoft} />
+              </button>
+            ) : null}
+            <div>
+              <div className="bgn-serif" style={{ fontSize: 15, fontWeight: 600 }}>{baby.name}'s overview{demoActive ? " (demo)" : ""}</div>
+              <div style={{ fontSize: 11, color: COLORS.inkFaint }}>{round1(currentAgeMonths)} months</div>
+            </div>
           </div>
           <button onClick={() => setViewMode((v) => (v === "parent" ? "clinical" : "parent"))} className="bgn-tap"
             style={{ display: "flex", alignItems: "center", gap: 5, background: COLORS.primarySoft, border: "none", borderRadius: 999, padding: "6px 12px", cursor: "pointer" }}>
